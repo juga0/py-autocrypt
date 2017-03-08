@@ -11,6 +11,7 @@ from _pytest.pytester import LineMatcher
 from autocrypt.bingpg import find_executable, BinGPG
 from autocrypt import mime
 from autocrypt.account import Account
+from autocrypt.pgpygpg import PGPyGPG
 
 
 def pytest_addoption(parser):
@@ -94,9 +95,30 @@ def bingpg_maker(request, tmpdir, gpgpath):
 
 
 @pytest.fixture
+def pgpygpg_maker(request, tmpdir, gpgpath=None):
+    """ return a function which creates initialized BinGPG instances. """
+    counter = itertools.count()
+
+    def maker(native=False):
+        if native:
+            pgpygpg = PGPyGPG(gpgpath=gpgpath)
+        else:
+            p = tmpdir.join("pgpygpg%d" % next(counter))
+            pgpygpg = PGPyGPG(p.strpath, gpgpath=gpgpath)
+        return pgpygpg
+    return maker
+
+
+@pytest.fixture
 def bingpg(bingpg_maker):
     """ return an initialized bingpg instance. """
     return bingpg_maker()
+
+
+@pytest.fixture
+def pgpygpg(pgpygpg_maker):
+    """ return an initialized bingpg instance. """
+    return pgpygpg_maker()
 
 
 @pytest.fixture

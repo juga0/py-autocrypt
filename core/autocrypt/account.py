@@ -16,11 +16,11 @@ import shutil
 import six
 import uuid
 from copy import deepcopy
-from .bingpg import cached_property, BinGPG
 from contextlib import contextmanager
 from base64 import b64decode
-from . import mime
 from email.utils import parsedate
+from .pgpygpg import cached_property, PGPyGPG
+from . import mime
 
 
 class PersistentAttrMixin(object):
@@ -306,7 +306,7 @@ class Account(object):
                 if parsedate(date) >= parsedate(old.get("*date", date)):
                     d["*date"] = date
                     keydata = b64decode(d["key"])
-                    keyhandle = ident.bingpg.import_keydata(keydata)
+                    keyhandle = ident.pgpygpg.import_keydata(keydata)
                     d["*keyhandle"] = keyhandle
                     with ident.config.atomic_change():
                         ident.config.peers[From] = d
@@ -354,9 +354,9 @@ class Identity:
             self.config.peers = {}
             if keyhandle is None:
                 emailadr = "{}@uuid.autocrypt.org".format(self.config.uuid)
-                keyhandle = self.bingpg.gen_secret_key(emailadr)
+                keyhandle = self.pgpygpg.gen_secret_key(emailadr)
             else:
-                keyinfos = self.bingpg.list_secret_keyinfos(keyhandle)
+                keyinfos = self.pgpygpg.list_secret_keyinfos(keyhandle)
                 for k in keyinfos:
                     is_in_uids = any(keyhandle in uid for uid in k.uids)
                     if is_in_uids or k.match(keyhandle):
@@ -382,23 +382,17 @@ class Identity:
         shutil.rmtree(self.dir, ignore_errors=True)
 
     @cached_property
-    def bingpg(self):
-        gpgmode = self.config.gpgmode
-        if gpgmode == "own":
-            gpghome = os.path.join(self.dir, "gpghome")
-        elif gpgmode == "system":
-            gpghome = None
-        else:
-            gpghome = -1
-        if gpghome == -1 or not self.config.gpgbin:
+    def pgpygpg(self):
+        gpghome = os.path.join(self.dir, "gpghome")
+        if not self.config.gpgbin:
             raise NotInitialized(
                 "Account directory {!r} not initialized".format(self.dir))
-        return BinGPG(homedir=gpghome, gpgpath=self.config.gpgbin)
+        return PGPyGPG(homedir=gpghome)
 
     def make_ac_header(self, emailadr, headername="Autocrypt: "):
         return headername + mime.make_ac_header_value(
             emailadr=emailadr,
-            keydata=self.bingpg.get_public_keydata(self.config.own_keyhandle),
+            keydata=self.pgpygpg.get_public_keydata(self.config.own_keyhandle),
             prefer_encrypt=self.config.prefer_encrypt,
         )
 
@@ -423,11 +417,12 @@ class Identity:
         kh = keyhandle
         if kh is None:
             kh = self.config.own_keyhandle
-        return self.bingpg.get_public_keydata(kh, armor=True)
+        return self.pgpygpg.get_public_keydata(kh, armor=True)
 
     def export_secret_key(self):
         """ return armored public key for this account. """
-        return self.bingpg.get_secret_keydata(self.config.own_keyhandle, armor=True)
+        return self.pgpygpg.get_secret_keydata(
+                self.config.own_keyhandle, armor=True)
 
 
 class PeerInfo:
@@ -439,7 +434,7 @@ class PeerInfo:
     def __init__(self, identity, d):
         self._dict = dic = d.copy()
         self.identity = identity
-        self.keyhandle = dic.pop("*keyhandle")
+        # self.keyhandle = dic.pop("*keyhandle")
         self.date = dic.pop("*date")
 
     def __getitem__(self, name):
