@@ -75,18 +75,22 @@ class TestCrypto:
     #     assert l[0].match(keyhandle)
 
     # TODO: fix test encryptying/decrypting
-    # @pytest.mark.parametrize("armor", [True, False])
-    # def test_transfer_key_and_encrypt_decrypt_roundtrip(self, crypto, armor):
-    #     keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
-    #     priv_keydata = crypto.get_secret_keydata(keyhandle=keyhandle, armor=armor)
-    #     if armor:
-    #         priv_keydata.decode("ascii")
-    #     public_keydata = crypto.get_public_keydata(keyhandle=keyhandle, armor=armor)
-    #     if armor:
-    #         public_keydata.decode("ascii")
-    #     keyhandle2 = crypto.import_keydata(public_keydata)
-    #     assert keyhandle2 == keyhandle
-    #     out_encrypt = crypto.encrypt(b"123", recipients=[keyhandle])
+    @pytest.mark.parametrize("armor", [True, False])
+    def test_transfer_key_and_encrypt_decrypt_roundtrip(self, crypto, armor):
+        keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
+        priv_keydata = crypto.get_secret_keydata(keyhandle=keyhandle, armor=armor)
+        logger.debug('test get secret data')
+        if armor:
+            priv_keydata.decode("ascii")
+        public_keydata = crypto.get_public_keydata(keyhandle=keyhandle, armor=armor)
+        logger.debug('test get public data')
+        if armor:
+            public_keydata.decode("ascii")
+        keyhandle2 = crypto.import_keydata(public_keydata)
+        logger.debug('++++++++++++++++++++test import public data')
+        assert keyhandle2 == keyhandle
+        logger.debug('----------------both keyhandles are the same')
+        out_encrypt = crypto.encrypt(b"123", recipients=[keyhandle])
     #
     #     out, decrypt_info = crypto.decrypt(out_encrypt)
     #     assert out == b"123"
@@ -105,9 +109,10 @@ class TestCrypto:
     #                     k.id, keyinfos))
 
     # TODO: check test
-    # def test_gen_key_and_sign_verify(self, crypto):
-    #     keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
-    #     sig = crypto.sign(b"123", keyhandle=keyhandle)
-    #     keyhandle_verified = crypto.verify(data=b'123', signature=sig)
-    #     i = min(len(keyhandle_verified), len(keyhandle))
-    #     assert keyhandle[-i:] == keyhandle_verified[-i:]
+    def test_gen_key_and_sign_verify(self, crypto):
+        keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
+        sig = crypto.sign(b"123", keyhandle=keyhandle)
+        ver = crypto.verify(data=b'123', signature=sig)
+        kh = ver.good_signatures.next().by
+        i = min(len(kh), len(keyhandle))
+        assert keyhandle[-i:] == kh[-i:]

@@ -196,7 +196,7 @@ def account(account_maker):
 
 
 @pytest.fixture
-def account_maker(tmpdir, gpgpath):
+def account_maker(tmpdir):
     """ return a function which creates a new Autocrypt account, by default initialized.
     pass init=False to the function to avoid initizialtion.
     """

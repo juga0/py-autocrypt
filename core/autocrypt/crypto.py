@@ -19,6 +19,7 @@ from operator import attrgetter
 from pgpy import PGPKey, PGPUID, PGPMessage, PGPSignature, PGPKeyring
 from pgpy.constants import PubKeyAlgorithm, KeyFlags, HashAlgorithm
 from pgpy.constants import SymmetricKeyAlgorithm, CompressionAlgorithm
+from pgpy.constants import SignatureType
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +98,7 @@ class Crypto(object):
             os.mkdir(self.pgpydir)
             os.chmod(self.pgpydir, 0o700)
 
-        self.load_pgpykr()
+        # self.load_pgpykr()
         # NOTE: this would lose parent and subkeys info.
         # self.load_keys_from_pgpykr()
         self.load_keys_from_pgpyhome()
@@ -117,10 +118,12 @@ class Crypto(object):
         for pkpath in pkpaths:
             pk, psubkeys = PGPKey.from_file(pkpath)
             self.publicpgpykeys.append(pk)
+        logger.debug('self.publicpgpykeys %s', self.publicpgpykeys)
         skpaths = glob.glob(os.path.join(self.pgpydir, '*.key'))
         for skpath in skpaths:
             sk, ssubkeys = PGPKey.from_file(skpath)
             self.secretpgpykeys.append(sk)
+        logger.debug('self.secretpgpykeys %s', self.secretpgpykeys)
 
     def load_keys_from_pgpykr(self):
         # NOTE: not using this method
@@ -201,6 +204,7 @@ class Crypto(object):
         """
         # NOTE: default algorithm was decided to be RSA and size 2048.
         self.own_pgpykey = PGPKey.new(alg_key, size)
+        logger.debug('new pgpkey')
         # NOTE: pgpy implements separate attributes for name and e-mail
         # address. Name is mandatory.
         # Here e-mail address is used for the attribute name .
@@ -209,7 +213,7 @@ class Crypto(object):
         # ' <e-mail address>', for instance:
         # " <alice@testsuite.autocrypt.org>" - which we do not want.
         uid = PGPUID.new(emailadr)
-        logger.debug('uid %s', uid)
+        logger.debug('new uid %s', uid)
         # NOTE: it is needed to specify all arguments in current pgpy
         # version.
         # FIXME: see which defaults we would like here
@@ -224,14 +228,15 @@ class Crypto(object):
                              CompressionAlgorithm.BZ2,
                              CompressionAlgorithm.ZIP,
                              CompressionAlgorithm.Uncompressed])
+        logger.debug('uid added')
         if add_subkey is True:
             subkey = PGPKey.new(alg_subkey, size)
+            logger.debug('new subkey')
             self.own_pgpykey.add_subkey(
                                 subkey,
                                 usage={KeyFlags.EncryptCommunications,
                                        KeyFlags.EncryptStorage})
-            logger.debug('Created subkey')
-            logger.debug('type(ubkey.parent) %s', type(subkey.parent))
+            logger.debug('subkey added')
         if protected is True:
             passphrase = getpass.getpass()
             self.own_pgpykey.protect(
@@ -239,19 +244,42 @@ class Crypto(object):
                              SymmetricKeyAlgorithm.AES256,
                              HashAlgorithm.SHA256)
             logger.debug('Key protected')
-        self.own_pgpykey.certify(self.own_pgpykey.userids[0])
-        logger.debug('self-signed key')
+
         self.own_keyhandle = self.own_pgpykey.fingerprint.keyid
+        logger.debug('longid %s',  self.own_keyhandle)
+        
+        self.sign_own_key()
+        
         # put the key as exported ASCII-armored in ring
         self.export_key(self.own_pgpykey)
+        logger.debug('exported key')
         self.publicpgpykeys.append(self.own_pgpykey.pubkey)
         self.secretpgpykeys.append(self.own_pgpykey)
-        self.load_pgpykr()
+        logger.debug('updated loaded keys')
+        logger.debug('self.publicpgpykeys %s', self.publicpgpykeys)
+        logger.debug('self.secretpgpykeys %s', self.secretpgpykeys)
+        # self.load_pgpykr()
         # self.add_key(self.own_pgpykey)
         # self.load_keys_from_pgpykr()
-
-        logger.debug('Created key pair %s', self.own_keyhandle)
         return self.own_keyhandle
+
+    def sign_own_key(self):
+        logger.debug('signing own key')
+        # self.own_pgpykey.certify(self.own_pgpykey.userids[0])
+        # for uid in self.own_pgpykey.pubkey.userids:
+        #     logger.debug('uid %s',  uid)
+        #     uid |= self.own_pgpykey.certify(uid)
+
+        # cert = self.own_pgpykey.certify(self.own_pgpykey.pubkey.userids[0], level=SignatureType.Persona_Cert)
+        # self.own_pgpykey.pubkey.userids[0] |= cert
+
+        # self.own_pgpykey.pubkey |= self.own_pgpykey.certify(self.own_pgpykey.pubkey)
+        
+        logger.debug('self.own_pgpykey.pubkey.userids[0].signers %s', self.own_pgpykey.pubkey.userids[0].signers)
+        logger.debug('self.own_pgpykey.userids[0].signers %s', self.own_pgpykey.userids[0].signers)
+
+        logger.debug('own_pgpkey.pubkey.subkeys.values()[0].signers %s', self.own_pgpykey.pubkey.subkeys.values()[0].signers )
+        logger.debug('own_pgpkey.subkeys.values()[0].signers %s',  self.own_pgpykey.subkeys.values()[0].signers)
 
     def export_skey(self, pgpykey=None):
         if pgpykey is None:
@@ -259,9 +287,11 @@ class Crypto(object):
         assert not pgpykey.is_public
         secretkeydata = self.get_secret_keydata(armor=True,
                                                 pgpykey=pgpykey)
-        with open(os.path.join(self.pgpydir, pgpykey.fingerprint.keyid
-                               + '.key'), 'w') as fd:
+        skpath = os.path.join(self.pgpydir, pgpykey.fingerprint.keyid
+                               + '.key')
+        with open(skpath, 'w') as fd:
             fd.write(secretkeydata)
+            logger.debug('written %s', skpath)
 
     def export_pkey(self, pgpykey=None):
         if pgpykey is None:
@@ -270,9 +300,11 @@ class Crypto(object):
             pgpykey = pgpykey.pubkey
         publickeydata = self.get_public_keydata(armor=True,
                                                 pgpykey=pgpykey)
-        with open(os.path.join(self.pgpydir, pgpykey.fingerprint.keyid
-                               + '.asc'), 'w') as fd:
+        pkpath = os.path.join(self.pgpydir, pgpykey.fingerprint.keyid
+                               + '.asc')
+        with open(pkpath, 'w') as fd:
             fd.write(publickeydata)
+            logger.debug('written %s', pkpath)
 
     def export_key(self, pgpykey=None):
         if pgpykey is None:
@@ -412,15 +444,22 @@ class Crypto(object):
         # cipher = SymmetricKeyAlgorithm.AES256
         # sessionkey = cipher.gen_key()
         enc_msg = PGPMessage.new(data)
-        enc_msg | self.own_pgpykey.sign(enc_msg)
-        logger.debug('recipients %s',  recipients)
+        logger.debug('enc_msg.message %s',  enc_msg.message)
+        enc_msg |= self.own_pgpykey.sign(enc_msg)
+        logger.debug('enc_msg.signers %s', enc_msg.signers)
+        logger.debug('recipients %s', recipients)
         for r in recipients:
             # FIXME: this fail because PGPy try to find self_signatures
             # in subkey
             k = self.get_key_from_keyhandle(r)
-            logger.debug('type(k.pubkey) %s', type(k.pubkey))
-            logger.debug('k.pubkey.subkeys %s', k.pubkey.subkeys)
-            enc_msg = k.pubkey.encrypt(enc_msg)
+            if not k.is_public:
+                pk = k.pubkey
+            else:
+                pk = k
+            psubkey = pk.subkeys.values()[0]
+            # logger.debug('psubkey %s', psubkey)
+            logger.debug('about to encrypt')
+            enc_msg = psubkey.encrypt(enc_msg)
             logger.debug('enc_msg %s',  enc_msg)
 
         # do at least this as soon as possible after encrypting to the
@@ -435,12 +474,13 @@ class Crypto(object):
         else:
             pgpykey = self.own_pgpykey
         sig_data = pgpykey.sign(data)
-        return str(sig_data)
+        logger.debug('data signed by %s', sig_data.signer)
+        return sig_data
 
     def verify(self, data, signature):
-        # TODO:
-        # signature = SignatureVerification()
         ver = self.own_pgpykey.verify(data, signature)
+        gs = ver.good_signatures.next()
+        logger.debug('data signed by %s verified %s',  gs.by,  gs.verified)
         return ver
 
     def decrypt(self, enc_data):
