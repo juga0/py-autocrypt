@@ -332,6 +332,7 @@ class Identity:
             self.config.email_regex = email_regex
             self.config.prefer_encrypt = "notset"
             self.config.peers = {}
+            logger.debug('self.crypto %s',  self.crypto)
             if keyhandle is None:
                 emailadr = "{}@uuid.autocrypt.org".format(self.config.uuid)
                 logger.debug('emailadr %s', emailadr)

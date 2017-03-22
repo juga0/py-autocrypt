@@ -2,7 +2,13 @@ from __future__ import print_function, unicode_literals
 import os
 import re
 import six
+import logging
 from autocrypt import mime
+
+FORMAT = "%(levelname)s: %(filename)s:%(lineno)s -"\
+         "%(funcName)s - %(message)s"
+logging.basicConfig(format=FORMAT, level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 def test_help(cmd):

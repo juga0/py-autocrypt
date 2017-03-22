@@ -2,10 +2,15 @@
 # vim:ts=4:sw=4:expandtab
 
 from __future__ import unicode_literals
-import os
 import pytest
+import logging
 from autocrypt.account_crypto import IdentityConfig, Account, NotInitialized
 from autocrypt import mime
+
+FORMAT = "%(levelname)s: %(filename)s:%(lineno)s -"\
+         "%(funcName)s - %(message)s"
+logging.basicConfig(format=FORMAT, level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 def test_identity_config(tmpdir):
@@ -77,14 +82,18 @@ def test_account_parse_incoming_mail_broken_ac_header(account_maker):
 def test_account_parse_incoming_mail_and_raw_encrypt(account_maker):
     adr = "a@a.org"
     ac1 = account_maker()
+    logger.debug('ac1 %s',  ac1)
     ac2 = account_maker()
+    logger.debug('ac2 %s',  ac2)
     msg = mime.gen_mail_msg(
         From="Alice <%s>" % adr, To=["b@b.org"], _dto=True,
         Autocrypt=ac1.make_header(adr, headername=""))
     peerinfo = ac2.process_incoming(msg)
     assert peerinfo["to"] == adr
     ident2 = ac2.get_identity()
+    logger.debug('ident2 %s',  ident2)
     ident1 = ac1.get_identity()
+    logger.debug('ident1 %s',  ident1)
     enc = ident2.crypto.encrypt(data=b"123", recipients=[peerinfo.keyhandle])
     data, descr_info = ident1.crypto.decrypt(enc)
     assert data == b"123"

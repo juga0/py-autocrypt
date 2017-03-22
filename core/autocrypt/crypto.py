@@ -123,6 +123,10 @@ class Crypto(object):
         for skpath in skpaths:
             sk, ssubkeys = PGPKey.from_file(skpath)
             self.secretpgpykeys.append(sk)
+        if self.own_pgpykey is None and self.secretpgpykeys:
+            # FIXME: there could be more than 1?
+            self.own_pgpykey = self.secretpgpykeys[0]
+            logger.debug('self.own_pgpykey.fingerprint.keyid %s',  self.own_pgpykey.fingerprint.keyid)
         logger.debug('self.secretpgpykeys %s', self.secretpgpykeys)
 
     def load_keys_from_pgpykr(self):
@@ -444,7 +448,8 @@ class Crypto(object):
         # cipher = SymmetricKeyAlgorithm.AES256
         # sessionkey = cipher.gen_key()
         enc_msg = PGPMessage.new(data)
-        logger.debug('enc_msg.message %s',  enc_msg.message)
+        logger.debug('enc_msg.message %s with recipients %s',
+                     enc_msg.message,  recipients)
         enc_msg |= self.own_pgpykey.sign(enc_msg)
         logger.debug('enc_msg.signers %s', enc_msg.signers)
         logger.debug('recipients %s', recipients)
