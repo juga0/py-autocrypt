@@ -3,7 +3,7 @@ import os
 import re
 import six
 import logging
-from autocrypt import mime
+from acpgpy import mime
 
 FORMAT = "%(levelname)s: %(filename)s:%(lineno)s -"\
          "%(funcName)s - %(message)s"
@@ -92,7 +92,7 @@ class TestProcessIncoming:
         logger.debug('+++++++++++++++')
         # FIXME
         # mycmd.run_fail(["process-incoming"], 
-                        # """*IdentityNotFound*bob@testsuite.autocrypt.org*""",
+                        # """*IdentityNotFound*bob@testsuite.acpgpy.org*""",
                         # """IdentityNotFound""",
         #                 input=mail)                        
 
@@ -108,7 +108,7 @@ class TestProcessIncoming:
         keyhandle, = m.groups()
         mycmd.run_ok(["export-public-key", "--id=ident1", keyhandle])
 
-    def test_process_incoming_no_autocrypt(self, mycmd, datadir):
+    def test_process_incoming_no_acpgpy(self, mycmd, datadir):
         mycmd.run_ok(["init", "--no-identity"])
         mycmd.run_ok(["add-identity", "ident1", "--email-regex=b@b.org"])
         msg = mime.gen_mail_msg(From="Alice <a@a.org>", To=["b@b.org"], _dto=True)

@@ -5,8 +5,8 @@ import logging
 import six
 import pytest
 
-from autocrypt import mime
-from autocrypt.bot import SimpleLog
+from acpgpy import mime
+from acpgpy.bot import SimpleLog
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ def ac_sender(account, request):
 @pytest.fixture
 def bcmd(mycmd):
     mycmd.run_ok(["init"])
-    mycmd.bot_adr = "bot@autocrypt.org"
+    mycmd.bot_adr = "bot@acpgpy.org"
     return mycmd
 
 
@@ -102,7 +102,7 @@ class TestBot:
         assert reply_msg["To"] == msg["From"]
         assert reply_msg["Autocrypt"]
 
-    def test_reply_with_autocrypt(self, bcmd, ac_sender, linematch):
+    def test_reply_with_acpgpy(self, bcmd, ac_sender, linematch):
         send_adr = ac_sender.adr
         msg = mime.gen_mail_msg(
             From=send_adr, To=[bcmd.bot_adr],
@@ -126,7 +126,7 @@ class TestBot:
         assert "no Autocrypt header" not in body
         print(body)
 
-    def test_reply_no_autocrypt(self, bcmd):
+    def test_reply_no_acpgpy(self, bcmd):
         adr = "somebody@example.org"
         msg = mime.gen_mail_msg(
             From=adr, To=[bcmd.bot_adr],
@@ -138,7 +138,7 @@ class TestBot:
         assert reply_msg["Autocrypt"]
         body = decode_body(reply_msg)
         print(body)
-        assert "no autocrypt header" in body.lower()
+        assert "no acpgpy header" in body.lower()
 
     # FIXME
 ##    @pytest.mark.parametrize("with_ac", [True, False])

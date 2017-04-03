@@ -63,10 +63,10 @@ def parse_one_ac_header_from_string(string):
 
 
 def parse_all_ac_headers_from_msg(msg):
-    autocrypt_headers = msg.get_all("Autocrypt") or []
-    logger.debug('autocrypt_headers %s', autocrypt_headers)
+    acpgpy_headers = msg.get_all("Autocrypt") or []
+    logger.debug('acpgpy_headers %s', acpgpy_headers)
     return [parse_ac_headervalue(inb)
-                for inb in autocrypt_headers if inb]
+                for inb in acpgpy_headers if inb]
 
 
 def parse_one_ac_header_from_msg(msg):
@@ -81,8 +81,8 @@ def parse_one_ac_header_from_msg(msg):
 
 
 def parse_ac_headervalue(value):
-    """ return a autocrypt attribute dictionary parsed
-    from the specified autocrypt header value.  Unspecified
+    """ return a acpgpy attribute dictionary parsed
+    from the specified acpgpy header value.  Unspecified
     default values for prefer-encrypt and the key type are filled in."""
     parts = value.split(";")
     logger.debug('parts %s', parts)
@@ -100,7 +100,7 @@ def parse_ac_headervalue(value):
 
 
 def verify_ac_dict(ac_dict):
-    """ return a list of errors from checking the autocrypt attribute dict.
+    """ return a list of errors from checking the acpgpy attribute dict.
     if the returned list is empty no errors were found.
     """
     l = []

@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 import pytest
 import six
-from autocrypt import mime
+from acpgpy import mime
 from base64 import b64decode
 
 
@@ -56,25 +56,25 @@ def test_make_and_parse_header_errors():
 class TestEmailCorpus:
     def test_rsa2048_simple(self, datadir, crypto):
         d = datadir.parse_ac_header_from_email("rsa2048-simple.eml")
-        assert d["to"] == "alice@testsuite.autocrypt.org", d
+        assert d["to"] == "alice@testsuite.acpgpy.org", d
         crypto.import_keydata(b64decode(d["key"]))
 
     def test_25519_simple(self, datadir, crypto):
         if (not crypto.supports_eddsa()):
             pytest.xfail("No support for EDDSA")
         d = datadir.parse_ac_header_from_email("25519-simple.eml")
-        assert d["to"] == "alice@testsuite.autocrypt.org"
+        assert d["to"] == "alice@testsuite.acpgpy.org"
         assert "key" in d and d["key"]
         crypto.import_keydata(b64decode(d["key"]))
 
     def test_rsa2048_explicit_type(self, datadir, crypto):
         d = datadir.parse_ac_header_from_email("rsa2048-explicit-type.eml")
-        assert d["to"] == "alice@testsuite.autocrypt.org"
+        assert d["to"] == "alice@testsuite.acpgpy.org"
         crypto.import_keydata(b64decode(d["key"]))
 
     def test_rsa2048_unknown_non_critical(self, datadir, crypto):
         d = datadir.parse_ac_header_from_email("rsa2048-unknown-non-critical.eml")
-        assert d["to"] == "alice@testsuite.autocrypt.org"
+        assert d["to"] == "alice@testsuite.acpgpy.org"
         assert d["_monkey"] == "ignore"
         crypto.import_keydata(b64decode(d["key"]))
 

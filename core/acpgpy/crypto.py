@@ -187,7 +187,7 @@ class Crypto(object):
         logger.debug('secretppgpykeys %s', self.secretpgpykeys)
 
     def gen_secret_key(self,
-                       emailadr='alice@testsuite.autocrypt.org',
+                       emailadr='alice@testsuite.acpgpy.org',
                        alg_key=PubKeyAlgorithm.RSAEncryptOrSign,
                        alg_subkey=PubKeyAlgorithm.RSAEncryptOrSign,
                        size=2048,
@@ -219,7 +219,7 @@ class Crypto(object):
         # If name attribute would be set to empty string
         # and email to the e-mail address, the uid would be
         # ' <e-mail address>', for instance:
-        # " <alice@testsuite.autocrypt.org>" - which we do not want.
+        # " <alice@testsuite.acpgpy.org>" - which we do not want.
         uid = PGPUID.new(emailadr)
         logger.debug('new uid %s', uid)
         # NOTE: it is needed to specify all arguments in current pgpy

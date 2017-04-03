@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim:ts=4:sw=4:expandtab
 
-""" Contains Account class which offers all autocrypt related access
+""" Contains Account class which offers all acpgpy related access
 and manipulation methods. It also contains some internal helpers
 which help to persist config and peer state.
 """
@@ -136,7 +136,7 @@ class IdentityNotFound(AccountException):
 
 
 class Account(object):
-    """ Autocrypt Account class which allows to manipulate autocrypt
+    """ Autocrypt Account class which allows to manipulate acpgpy
     configuration and state for use from mail processing agents.
     Autocrypt uses a standalone GPG managed keyring and persists its
     config to a default app-config location.
@@ -152,7 +152,7 @@ class Account(object):
 
         :type dir: unicode
         :param dir:
-             directory in which autocrypt will store all state
+             directory in which acpgpy will store all state
              including a gpg-managed keyring.
         """
         self.dir = dir
@@ -250,7 +250,7 @@ class Account(object):
             in the generated Autocrypt header.  An account may generate
             and send mail from multiple aliases and we advertise
             the same key across those aliases.
-            (XXX discuss whether "to" is all that useful for level-0 autocrypt.)
+            (XXX discuss whether "to" is all that useful for level-0 acpgpy.)
 
         :type headername: unicode
         :param headername:
@@ -258,7 +258,7 @@ class Account(object):
             By specifying an empty string you just get the header value.
 
         :rtype: unicode
-        :returns: autocrypt header with prefix and value (or empty string)
+        :returns: acpgpy header with prefix and value (or empty string)
         """
         if not self.list_identity_names():
             raise NotInitialized("no identities configured")
@@ -317,7 +317,7 @@ class Account(object):
                         ident.config.peers[From] = d
                     return PeerInfo(ident, d)
         elif old:
-            # we had an autocrypt header and now forget about it
+            # we had an acpgpy header and now forget about it
             # because we got a mail which doesn't have one
             with ident.config.atomic_change():
                 ident.config.peers[From] = {}
@@ -352,7 +352,7 @@ class Identity:
             self.config.peers = {}
             logger.debug('self.crypto %s', self.crypto)
             if keyhandle is None:
-                emailadr = "{}@uuid.autocrypt.org".format(self.config.uuid)
+                emailadr = "{}@uuid.acpgpy.org".format(self.config.uuid)
                 logger.debug('emailadr %s', emailadr)
                 keyhandle = self.crypto.gen_secret_key(emailadr)
             else:

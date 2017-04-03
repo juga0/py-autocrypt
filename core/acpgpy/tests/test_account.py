@@ -6,8 +6,8 @@ import pytest
 import logging
 from time import sleep
 
-from autocrypt.account_crypto import IdentityConfig, Account, NotInitialized
-from autocrypt import mime
+from acpgpy.account import IdentityConfig, Account, NotInitialized
+from acpgpy import mime
 
 FORMAT = "%(levelname)s: %(filename)s:%(lineno)s -"\
          "%(funcName)s - %(message)s"
