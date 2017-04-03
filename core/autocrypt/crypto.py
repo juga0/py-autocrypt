@@ -33,6 +33,7 @@ def key_base64(pgpykey):
     :rtype: string
 
     """
+    assert type(pgpykey) == PGPKey
     keybytes = key_bytes(pgpykey)
     keybase64 = b64encode(keybytes)
     return keybase64
@@ -47,6 +48,7 @@ def key_bytes(pgpykey):
     :rtype: string
 
     """
+    assert type(pgpykey) == PGPKey
     if sys.version_info >= (3, 0):
         keybytes = bytes(pgpykey)
     else:
@@ -179,6 +181,7 @@ class Crypto(object):
             self.secretpgpykeys.append(pgpykey)
             self.publicpgpykeys.append(pgpykey.pubkey)
         else:
+            assert type(pgpykey) == PGPKey
             self.publicpgpykeys.append(pgpykey)
         logger.debug('publicppgpykeys %s',  self.publicpgpykeys)
         logger.debug('secretppgpykeys %s',  self.secretpgpykeys)
@@ -189,7 +192,8 @@ class Crypto(object):
                        alg_subkey=PubKeyAlgorithm.RSAEncryptOrSign,
                        size=2048,
                        add_subkey=True,
-                       protected=False):
+                       protected=False,
+                       _own=True):
         # RSAEncrypt is deprecated, therefore using RSAEncryptOrSign
         # also for the subkey
         """Generate PGPKey object.
@@ -207,7 +211,7 @@ class Crypto(object):
 
         """
         # NOTE: default algorithm was decided to be RSA and size 2048.
-        self.own_pgpykey = PGPKey.new(alg_key, size)
+        skey = PGPKey.new(alg_key, size)
         logger.debug('new pgpkey')
         # NOTE: pgpy implements separate attributes for name and e-mail
         # address. Name is mandatory.
@@ -221,7 +225,7 @@ class Crypto(object):
         # NOTE: it is needed to specify all arguments in current pgpy
         # version.
         # FIXME: see which defaults we would like here
-        self.own_pgpykey.add_uid(
+        skey.add_uid(
                 uid,
                 usage={KeyFlags.Sign},
                 hashes=[HashAlgorithm.SHA512, HashAlgorithm.SHA256],
@@ -236,58 +240,63 @@ class Crypto(object):
         if add_subkey is True:
             subkey = PGPKey.new(alg_subkey, size)
             logger.debug('new subkey')
-            self.own_pgpykey.add_subkey(
+            skey.add_subkey(
                                 subkey,
                                 usage={KeyFlags.EncryptCommunications,
                                        KeyFlags.EncryptStorage})
             logger.debug('subkey added')
         if protected is True:
             passphrase = getpass.getpass()
-            self.own_pgpykey.protect(
+            skey.protect(
                              passphrase,
                              SymmetricKeyAlgorithm.AES256,
                              HashAlgorithm.SHA256)
             logger.debug('Key protected')
 
-        self.own_keyhandle = self.own_pgpykey.fingerprint.keyid
-        logger.debug('longid %s',  self.own_keyhandle)
-        
-        self.sign_own_key()
-        
+        # self.sign_own_key()
+
         # put the key as exported ASCII-armored in ring
-        self.export_key(self.own_pgpykey)
+        self.export_key(skey)
         logger.debug('exported key')
-        self.publicpgpykeys.append(self.own_pgpykey.pubkey)
-        self.secretpgpykeys.append(self.own_pgpykey)
+        self.publicpgpykeys.append(skey.pubkey)
+        self.secretpgpykeys.append(skey)
         logger.debug('updated loaded keys')
         logger.debug('self.publicpgpykeys %s', self.publicpgpykeys)
         logger.debug('self.secretpgpykeys %s', self.secretpgpykeys)
         # self.load_pgpykr()
-        # self.add_key(self.own_pgpykey)
+        # self.add_key(skey)
         # self.load_keys_from_pgpykr()
-        return self.own_keyhandle
+        if _own is True:
+            self.own_pgpykey = skey
+            self.own_keyhandle = skey.fingerprint.keyid
+            logger.debug('longid %s',  self.own_keyhandle)
+        return skey.fingerprint.keyid
 
-    def sign_own_key(self):
-        logger.debug('signing own key')
-        # self.own_pgpykey.certify(self.own_pgpykey.userids[0])
-        # for uid in self.own_pgpykey.pubkey.userids:
-        #     logger.debug('uid %s',  uid)
-        #     uid |= self.own_pgpykey.certify(uid)
+    def supports_eddsa(self):
+        return False
 
-        # cert = self.own_pgpykey.certify(self.own_pgpykey.pubkey.userids[0], level=SignatureType.Persona_Cert)
-        # self.own_pgpykey.pubkey.userids[0] |= cert
-
-        # self.own_pgpykey.pubkey |= self.own_pgpykey.certify(self.own_pgpykey.pubkey)
-        
-        logger.debug('self.own_pgpykey.pubkey.userids[0].signers %s', self.own_pgpykey.pubkey.userids[0].signers)
-        logger.debug('self.own_pgpykey.userids[0].signers %s', self.own_pgpykey.userids[0].signers)
-
-        logger.debug('own_pgpkey.pubkey.subkeys.values()[0].signers %s', self.own_pgpykey.pubkey.subkeys.values()[0].signers )
-        logger.debug('own_pgpkey.subkeys.values()[0].signers %s',  self.own_pgpykey.subkeys.values()[0].signers)
+    # def sign_own_key(self):
+    #     logger.debug('signing own key')
+    #     # self.own_pgpykey.certify(self.own_pgpykey.userids[0])
+    #     # for uid in self.own_pgpykey.pubkey.userids:
+    #     #     logger.debug('uid %s',  uid)
+    #     #     uid |= self.own_pgpykey.certify(uid)
+    #
+    #     # cert = self.own_pgpykey.certify(self.own_pgpykey.pubkey.userids[0], level=SignatureType.Persona_Cert)
+    #     # self.own_pgpykey.pubkey.userids[0] |= cert
+    #
+    #     # self.own_pgpykey.pubkey |= self.own_pgpykey.certify(self.own_pgpykey.pubkey)
+    #
+    #     logger.debug('self.own_pgpykey.pubkey.userids[0].signers %s', self.own_pgpykey.pubkey.userids[0].signers)
+    #     logger.debug('self.own_pgpykey.userids[0].signers %s', self.own_pgpykey.userids[0].signers)
+    #
+    #     logger.debug('own_pgpkey.pubkey.subkeys.values()[0].signers %s', self.own_pgpykey.pubkey.subkeys.values()[0].signers )
+    #     logger.debug('own_pgpkey.subkeys.values()[0].signers %s',  self.own_pgpykey.subkeys.values()[0].signers)
 
     def export_skey(self, pgpykey=None):
         if pgpykey is None:
             pgpykey = self.own_pgpykey
+        assert type(pgpykey) == PGPKey
         assert not pgpykey.is_public
         secretkeydata = self.get_secret_keydata(armor=True,
                                                 pgpykey=pgpykey)
@@ -300,6 +309,7 @@ class Crypto(object):
     def export_pkey(self, pgpykey=None):
         if pgpykey is None:
             pgpykey = self.own_pgpykey.pubkey
+        assert type(pgpykey) == PGPKey
         if not pgpykey.is_public:
             pgpykey = pgpykey.pubkey
         publickeydata = self.get_public_keydata(armor=True,
@@ -313,29 +323,44 @@ class Crypto(object):
     def export_key(self, pgpykey=None):
         if pgpykey is None:
             pgpykey = self.own_pgpykey
+        assert type(pgpykey) == PGPKey
         if pgpykey.is_public:
             self.export_pkey(pgpykey)
         else:
             self.export_skey(pgpykey)
             self.export_pkey(pgpykey.pubkey)
 
-    def get_key_from_keyhandle(self, keyhandle):
+    def export_keys(self):
+        [self.export_pkey(k) for k in self.publicpgpykeys]
+        [self.export_skey(k) for k in self.secretgpykeys]
+        logger.debug('exported all keys')
+
+    def get_secretkey_from_keyhandle(self, keyhandle):
         logger.debug('keyhandle %s',  keyhandle)
         keys = [k for k in self.secretpgpykeys
                 if (k.fingerprint.keyid == keyhandle
                     or k.fingerprint.shortid == keyhandle)]
-        logger.debug('keys %s', keys)
+        logger.debug('keys %s', [k.fingerprint.keyid for k in keys])
         if len(keys) > 0:
-            logger.debug('found secret key with keyhandle')
+            logger.debug('found secret key with keyhandle %s', keyhandle)
             return keys[0]
+        logger.debug('not found secret key with keyhandle')
+        return None
+
+    def get_publickey_from_keyhandle(self, keyhandle):
         keys = [k for k in self.publicpgpykeys
                 if (k.fingerprint.keyid == keyhandle
                     or k.fingerprint.shortid == keyhandle)]
+        logger.debug('keys %s', [k.fingerprint.keyid for k in keys])
         if len(keys) > 0:
-            logger.debug('found public key with keyhandle')
+            logger.debug('found public key with keyhandle %s', keyhandle)
             return keys[0]
-        logger.debug('not found key with keyhandle')
+        logger.debug('not found public key with keyhandle')
         return None
+
+    def get_key_from_keyhandle(self, keyhandle):
+        if self.get_secretkey_from_keyhandle(keyhandle) is None:
+            return self.get_publickey_from_keyhandle(keyhandle)
 
     def get_userid_from_keyhandle(self, keyhandle=None):
         if keyhandle is None:
@@ -350,13 +375,21 @@ class Crypto(object):
     def get_public_keydata(self, keyhandle=None, armor=False,
                            b64=False, pgpykey=None):
         if pgpykey is None and keyhandle is None:
+            logger.debug('No keyhandle, no key')
             pgpykey = self.own_pgpykey.pubkey
         elif pgpykey is None and keyhandle is not None:
-            pgpykey = self.get_key_from_keyhandle(keyhandle)
+            logger.debug('no key, but keyhandle')
+            pgpykey = self.get_publickey_from_keyhandle(keyhandle)
         elif pgpykey is not None and not pgpykey.is_public:
+            logger.debug('key, but not public')
             pgpykey = pgpykey.pubkey
         elif pgpykey is not None:
+            logger.debug('key')
             pgpykey = pgpykey
+        else:
+            return None
+        assert type(pgpykey) == PGPKey
+        logger.debug('pgpykey.fingerprint.longid %s', pgpykey.fingerprint.keyid)
         if armor is True:
             keydata = str(pgpykey)
         else:
@@ -367,13 +400,17 @@ class Crypto(object):
 
     def get_secret_keydata(self, keyhandle=None, armor=False, pgpykey=None):
         if pgpykey is None and keyhandle is None:
+            logger.debug('No keyhandle, no key')
             pgpykey = self.own_pgpykey
         elif pgpykey is None and keyhandle is not None:
-            pgpykey = self.get_key_from_keyhandle(keyhandle)
+            logger.debug('no key, but keyhandle')
+            pgpykey = self.get_secretkey_from_keyhandle(keyhandle)
         elif pgpykey is not None:
+            logger.debug('key')
             pgpykey = pgpykey
         else:
-            pgpykey = pgpykey
+            logger.debug('no key')
+            return None
         assert not pgpykey.is_public
         if armor is True:
             keydata = str(pgpykey)
@@ -464,8 +501,10 @@ class Crypto(object):
             psubkey = pk.subkeys.values()[0]
             # logger.debug('psubkey %s', psubkey)
             logger.debug('about to encrypt')
-            enc_msg = psubkey.encrypt(enc_msg)
-            logger.debug('enc_msg %s',  enc_msg)
+            enc_msg = k.encrypt(enc_msg)
+            # enc_msg = psubkey.encrypt(enc_msg)
+        logger.debug('enc_msg %s',  enc_msg)
+        logger.debug('type(enc_msg) %s',  type(enc_msg))
 
         # do at least this as soon as possible after encrypting to the
         # final recipient
@@ -489,15 +528,29 @@ class Crypto(object):
         return ver
 
     def decrypt(self, enc_data):
-        enc_data_pgpy = PGPMessage.from_blob(enc_data)
+        logger.debug('enc_data %s', enc_data)
+        logger.debug('type(enc_data) %s', type(enc_data))
+        if type(enc_data) == str:
+            enc_data_pgpy = PGPMessage.from_blob(enc_data)
+        else:
+            enc_data_pgpy = enc_data
         out = self.own_pgpykey.decrypt(enc_data_pgpy)
+        # out = enc_data_pgpy.decrypt(self.own_pgpykey)
+        logger.debug('type(out) %s', type(out))
+        logger.debug('out %s', out)
         # TODO: extract keyinfos, for instance
         # keyinfos = [('RSA', '2048', 'longid', 'uid', 'created')]
-        return out,  []
+        return out.message,  []
 
     def import_keydata(self, keydata):
         pgpykey, _ = PGPKey.from_blob(keydata)
-        # TODO: add in self.public/secretpgpykeys
+        logger.debug("imported key %s", pgpykey.fingerprint.keyid)
+        self.export_key(pgpykey)
+        if pgpykey.is_public:
+            self.publicpgpykeys.append(pgpykey)
+        else:
+            self.secretpgpykeys.append(pgpykey)
+            self.publicpgpykeys.append(pgpykey.pubkey)
         return pgpykey.fingerprint.keyid
 
 

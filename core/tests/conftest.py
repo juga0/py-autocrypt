@@ -20,36 +20,36 @@ def tmpdir(tmpdir_factory, request):
     return bn
 
 #
-#@pytest.fixture(autouse=True)
-#def _testcache_crypto_(request, get_next_cache, monkeypatch):
-#    # cache generation of secret keys
-#    old_gen_secret_key = Crypto.gen_secret_key
+# @pytest.fixture(autouse=True)
+# def _testcache_crypto_(request, get_next_cache, monkeypatch):
+#     # cache generation of secret keys
+#     old_gen_secret_key = Crypto.gen_secret_key
 #
-#    def gen_secret_key(self, emailadr):
-#        basekey = request.node.nodeid
-#        next_cache = get_next_cache(basekey)
-#        if self.pgpydir and next_cache.exists():
-#            logging.debug("restoring pgpydir {}".format(self.pgpydir))
-#            return next_cache.restore(self.pgpydir)
-#        else:
-#            if self.pgpydir is None:
-#                assert "GNUPGHOME" in os.environ
-#            ret = old_gen_secret_key(self, emailadr)
-#            if self.pgpydir is not None:
-#                if os.path.exists(self.pgpydir):
-#                    next_cache.store(self.pgpydir, ret)
-#            return ret
+#     def gen_secret_key(self, emailadr):
+#         basekey = request.node.nodeid
+#         next_cache = get_next_cache(basekey)
+#         if self.pgpydir and next_cache.exists():
+#             logging.debug("restoring pgpydir {}".format(self.pgpydir))
+#             return next_cache.restore(self.pgpydir)
+#         else:
+#             # if self.pgpydir is None:
+#             #     assert "GNUPGHOME" in os.environ
+#             ret = old_gen_secret_key(self, emailadr)
+#             if self.pgpydir is not None:
+#                 if os.path.exists(self.pgpydir):
+#                     next_cache.store(self.pgpydir, ret)
+#             return ret
 #
-#    monkeypatch.setattr(Crypto, "gen_secret_key", gen_secret_key)
+#     monkeypatch.setattr(Crypto, "gen_secret_key", gen_secret_key)
 #
-#    # make sure any possibly started agents are killed
-#    old_init = Crypto.__init__
+#     # make sure any possibly started agents are killed
+#     old_init = Crypto.__init__
 #
-#    def __init__(self, *args, **kwargs):
-#        old_init(self, *args, **kwargs)
+#     def __init__(self, *args, **kwargs):
+#         old_init(self, *args, **kwargs)
 #
-#    monkeypatch.setattr(Crypto, "__init__", __init__)
-#    return
+#     monkeypatch.setattr(Crypto, "__init__", __init__)
+#     return
 
 
 @pytest.fixture
@@ -82,6 +82,29 @@ class ClickRunner:
     def set_basedir(self, account_dir):
         self._rootargs.insert(0, "--basedir")
         self._rootargs.insert(1, account_dir)
+
+    def run_ok(self, args, fnl=None, input=None):
+        __tracebackhide__ = True
+        argv = self._rootargs + args
+        # we use our nextbackup helper to cache account creation
+        # unless --no-test-cache is specified
+        res = self.runner.invoke(self._main, argv, catch_exceptions=False,
+                                 input=input)
+        if res.exit_code != 0:
+            print(res.output)
+            raise Exception("cmd exited with %d: %s" % (res.exit_code, argv))
+        return _perform_match(res.output, fnl)
+
+    def run_fail(self, args, fnl=None, input=None, code=None):
+        __tracebackhide__ = True
+        argv = self._rootargs + args
+        res = self.runner.invoke(self._main, argv, catch_exceptions=False,
+                                 input=input)
+        if res.exit_code == 0 or (code is not None and res.exit_code != code):
+            print (res.output)
+            raise Exception("got exit code {!r}, expected {!r}, output: {}".format(
+                res.exit_code, code, res.output))
+        return _perform_match(res.output, fnl)
 
 
 def _perform_match(output, fnl):

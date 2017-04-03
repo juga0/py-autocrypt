@@ -263,10 +263,12 @@ class Account(object):
         if not self.list_identity_names():
             raise NotInitialized("no identities configured")
         ident = self.get_identity_from_emailadr([emailadr])
+        logger.debug("ident %s", ident)
         if ident is None:
             return ""
         else:
             assert ident.config.own_keyhandle
+            logger.debug("ident.config.own_keyhandle %s", ident.config.own_keyhandle)
             return ident.make_ac_header(emailadr, headername=headername)
 
     def process_incoming(self, msg, delivto=None):
@@ -282,18 +284,34 @@ class Account(object):
             _, delivto = mime.parse_email_addr(msg.get("Delivered-To"))
             assert delivto
         ident = self.get_identity_from_emailadr([delivto])
+        logger.debug('ident %s', ident)
         if ident is None:
             raise IdentityNotFound("no identity matches emails={}".format([delivto]))
         From = mime.parse_email_addr(msg["From"])[1]
+        logger.debug('From %s', From)
         old = ident.config.peers.get(From, {})
+        logger.debug('old %s', old)
+        logger.debug('msg is still %s', msg)
         d = mime.parse_one_ac_header_from_msg(msg)
+        logger.debug('d %s', d)
         date = msg.get("Date")
         if d and "to" in d:
+            logger.debug('d and to in d')
             if d["to"] == From:
+                logger.debug('to == from')
                 if parsedate(date) >= parsedate(old.get("*date", date)):
+                    logger.debug('date>=old date')
                     d["*date"] = date
                     keydata = b64decode(d["key"])
+                    logger.debug('type(d[key]) %s', type(d["key"]))
+                    logger.debug('type(keydata) %s', type(keydata))
+                    # logger.debug('keydata %s', keydata)
                     keyhandle = ident.crypto.import_keydata(keydata)
+                    logger.debug('imported key with keyhandle %s', keyhandle)
+                    pgpykey = ident.crypto.get_publickey_from_keyhandle(keyhandle)
+                    ident.crypto.export_key(pgpykey)
+                    logger.debug('exported key')
+                    ident.crypto.publicpgpykeys.append(pgpykey)
                     d["*keyhandle"] = keyhandle
                     with ident.config.atomic_change():
                         ident.config.peers[From] = d
@@ -339,7 +357,7 @@ class Identity:
                 keyhandle = self.crypto.gen_secret_key(emailadr)
             else:
                 keyinfos = self.crypto.list_secret_keyinfos(keyhandle)
-                logger.debug('')
+                logger.debug('keyinfos %s', keyinfos)
                 for k in keyinfos:
                     is_in_uids = any(keyhandle in uid for uid in k.uids)
                     if is_in_uids or k.match(keyhandle):
@@ -349,6 +367,7 @@ class Identity:
                     raise ValueError("could not find secret key for {!r}, found {!r}"
                                      .format(keyhandle, keyinfos))
             self.config.own_keyhandle = keyhandle
+            logger.debug('keyhandle %s', keyhandle)
             self.config.own_key = self.crypto.get_secret_keydata(armor=True)
             self.config.own_public_key = self.crypto.get_public_keydata(armor=True)
 

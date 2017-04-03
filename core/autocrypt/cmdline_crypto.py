@@ -17,6 +17,7 @@ from .cmdline_utils import (
     out_red, log_info, mycommand,
 )
 from .account_crypto import Account, IdentityNotFound
+from .bingpg import find_executable
 from . import mime
 from .bot import bot_reply
 
