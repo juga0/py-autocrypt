@@ -88,10 +88,10 @@ def test_account_parse_incoming_mail_and_raw_encrypt(account_maker):
     alice_adr = "a@a.org"
     # create bob account
     bob_ac = account_maker()
-    logger.debug('bob_ac %s',  bob_ac)
+    logger.debug('bob_ac %s', bob_ac)
     # create alice account
     alice_ac = account_maker()
-    logger.debug('alice_ac %s',  alice_ac)
+    logger.debug('alice_ac %s', alice_ac)
     # alice generate mail for bob
     msg = mime.gen_mail_msg(
         From="Alice <%s>" % alice_adr, To=["b@b.org"], _dto=True,
@@ -103,9 +103,9 @@ def test_account_parse_incoming_mail_and_raw_encrypt(account_maker):
     # the new bob's peer is alice
     assert peerinfo["to"] == alice_adr
     alice_ident = alice_ac.get_identity()
-    logger.debug('alice_ident %s',  alice_ident)
+    logger.debug('alice_ident %s', alice_ident)
     bob_ident = bob_ac.get_identity()
-    logger.debug('bob_ident %s',  bob_ident)
+    logger.debug('bob_ident %s', bob_ident)
     # bob encrypt message for alice
     enc = bob_ident.crypto.encrypt(data=b"123", recipients=[peerinfo.keyhandle])
     # alice decrypt message from bob

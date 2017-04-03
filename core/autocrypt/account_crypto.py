@@ -42,10 +42,10 @@ class PersistentAttrMixin(object):
         return d
 
     def _reload(self):
-       try:
-           self._property_cache.pop("_dict")
-       except AttributeError:
-           pass
+        try:
+            self._property_cache.pop("_dict")
+        except AttributeError:
+            pass
 
     def has_changed(self):
         return self._dict != self._dict_old
@@ -308,7 +308,7 @@ class Account(object):
                     # logger.debug('keydata %s', keydata)
                     keyhandle = ident.crypto.import_keydata(keydata)
                     logger.debug('imported key with keyhandle %s', keyhandle)
-                    pgpykey = ident.crypto.get_publickey_from_keyhandle(keyhandle)
+                    pgpykey = ident.crypto.get_publickey_from_kh(keyhandle)
                     ident.crypto.export_key(pgpykey)
                     logger.debug('exported key')
                     ident.crypto.publicpgpykeys.append(pgpykey)
@@ -350,7 +350,7 @@ class Identity:
             self.config.email_regex = email_regex
             self.config.prefer_encrypt = "notset"
             self.config.peers = {}
-            logger.debug('self.crypto %s',  self.crypto)
+            logger.debug('self.crypto %s', self.crypto)
             if keyhandle is None:
                 emailadr = "{}@uuid.autocrypt.org".format(self.config.uuid)
                 logger.debug('emailadr %s', emailadr)
@@ -422,7 +422,7 @@ class Identity:
     def export_secret_key(self):
         """ return armored public key for this account. """
         return self.crypto.get_secret_keydata(
-                self.config.own_keyhandle, armor=True)
+            self.config.own_keyhandle, armor=True)
 
 
 class PeerInfo:

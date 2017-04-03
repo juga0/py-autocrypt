@@ -128,7 +128,7 @@ class Crypto(object):
         if self.own_pgpykey is None and self.secretpgpykeys:
             # FIXME: there could be more than 1?
             self.own_pgpykey = self.secretpgpykeys[0]
-            logger.debug('self.own_pgpykey.fingerprint.keyid %s',  self.own_pgpykey.fingerprint.keyid)
+            logger.debug('self.own_pgpykey.fingerprint.keyid %s', self.own_pgpykey.fingerprint.keyid)
         logger.debug('self.secretpgpykeys %s', self.secretpgpykeys)
 
     def load_keys_from_pgpykr(self):
@@ -183,8 +183,8 @@ class Crypto(object):
         else:
             assert type(pgpykey) == PGPKey
             self.publicpgpykeys.append(pgpykey)
-        logger.debug('publicppgpykeys %s',  self.publicpgpykeys)
-        logger.debug('secretppgpykeys %s',  self.secretpgpykeys)
+        logger.debug('publicppgpykeys %s', self.publicpgpykeys)
+        logger.debug('secretppgpykeys %s', self.secretpgpykeys)
 
     def gen_secret_key(self,
                        emailadr='alice@testsuite.autocrypt.org',
@@ -269,7 +269,7 @@ class Crypto(object):
         if _own is True:
             self.own_pgpykey = skey
             self.own_keyhandle = skey.fingerprint.keyid
-            logger.debug('longid %s',  self.own_keyhandle)
+            logger.debug('longid %s', self.own_keyhandle)
         return skey.fingerprint.keyid
 
     def supports_eddsa(self):
@@ -279,7 +279,7 @@ class Crypto(object):
     #     logger.debug('signing own key')
     #     # self.own_pgpykey.certify(self.own_pgpykey.userids[0])
     #     # for uid in self.own_pgpykey.pubkey.userids:
-    #     #     logger.debug('uid %s',  uid)
+    #     #     logger.debug('uid %s', uid)
     #     #     uid |= self.own_pgpykey.certify(uid)
     #
     #     # cert = self.own_pgpykey.certify(self.own_pgpykey.pubkey.userids[0], level=SignatureType.Persona_Cert)
@@ -291,7 +291,7 @@ class Crypto(object):
     #     logger.debug('self.own_pgpykey.userids[0].signers %s', self.own_pgpykey.userids[0].signers)
     #
     #     logger.debug('own_pgpkey.pubkey.subkeys.values()[0].signers %s', self.own_pgpykey.pubkey.subkeys.values()[0].signers )
-    #     logger.debug('own_pgpkey.subkeys.values()[0].signers %s',  self.own_pgpykey.subkeys.values()[0].signers)
+    #     logger.debug('own_pgpkey.subkeys.values()[0].signers %s', self.own_pgpykey.subkeys.values()[0].signers)
 
     def export_skey(self, pgpykey=None):
         if pgpykey is None:
@@ -336,7 +336,7 @@ class Crypto(object):
         logger.debug('exported all keys')
 
     def get_secretkey_from_keyhandle(self, keyhandle):
-        logger.debug('keyhandle %s',  keyhandle)
+        logger.debug('keyhandle %s', keyhandle)
         keys = [k for k in self.secretpgpykeys
                 if (k.fingerprint.keyid == keyhandle
                     or k.fingerprint.shortid == keyhandle)]
@@ -347,7 +347,7 @@ class Crypto(object):
         logger.debug('not found secret key with keyhandle')
         return None
 
-    def get_publickey_from_keyhandle(self, keyhandle):
+    def get_publickey_from_kh(self, keyhandle):
         keys = [k for k in self.publicpgpykeys
                 if (k.fingerprint.keyid == keyhandle
                     or k.fingerprint.shortid == keyhandle)]
@@ -360,7 +360,7 @@ class Crypto(object):
 
     def get_key_from_keyhandle(self, keyhandle):
         if self.get_secretkey_from_keyhandle(keyhandle) is None:
-            return self.get_publickey_from_keyhandle(keyhandle)
+            return self.get_publickey_from_kh(keyhandle)
 
     def get_userid_from_keyhandle(self, keyhandle=None):
         if keyhandle is None:
@@ -379,7 +379,7 @@ class Crypto(object):
             pgpykey = self.own_pgpykey.pubkey
         elif pgpykey is None and keyhandle is not None:
             logger.debug('no key, but keyhandle')
-            pgpykey = self.get_publickey_from_keyhandle(keyhandle)
+            pgpykey = self.get_publickey_from_kh(keyhandle)
         elif pgpykey is not None and not pgpykey.is_public:
             logger.debug('key, but not public')
             pgpykey = pgpykey.pubkey
@@ -486,7 +486,7 @@ class Crypto(object):
         # sessionkey = cipher.gen_key()
         enc_msg = PGPMessage.new(data)
         logger.debug('enc_msg.message %s with recipients %s',
-                     enc_msg.message,  recipients)
+                     enc_msg.message, recipients)
         enc_msg |= self.own_pgpykey.sign(enc_msg)
         logger.debug('enc_msg.signers %s', enc_msg.signers)
         logger.debug('recipients %s', recipients)
@@ -503,8 +503,8 @@ class Crypto(object):
             logger.debug('about to encrypt')
             enc_msg = k.encrypt(enc_msg)
             # enc_msg = psubkey.encrypt(enc_msg)
-        logger.debug('enc_msg %s',  enc_msg)
-        logger.debug('type(enc_msg) %s',  type(enc_msg))
+        logger.debug('enc_msg %s', enc_msg)
+        logger.debug('type(enc_msg) %s', type(enc_msg))
 
         # do at least this as soon as possible after encrypting to the
         # final recipient
@@ -524,7 +524,7 @@ class Crypto(object):
     def verify(self, data, signature):
         ver = self.own_pgpykey.verify(data, signature)
         gs = ver.good_signatures.next()
-        logger.debug('data signed by %s verified %s',  gs.by,  gs.verified)
+        logger.debug('data signed by %s verified %s', gs.by, gs.verified)
         return ver
 
     def decrypt(self, enc_data):
@@ -540,7 +540,7 @@ class Crypto(object):
         logger.debug('out %s', out)
         # TODO: extract keyinfos, for instance
         # keyinfos = [('RSA', '2048', 'longid', 'uid', 'created')]
-        return out.message,  []
+        return out.message, []
 
     def import_keydata(self, keydata):
         pgpykey, _ = PGPKey.from_blob(keydata)

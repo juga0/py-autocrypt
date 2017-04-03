@@ -50,20 +50,20 @@ class TestCrypto:
     def test_gen_key_and_get_public_keydata(self, crypto):
         keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
         logger.debug('keyhandle %s', keyhandle)
-        keydata = crypto.get_public_keydata(keyhandle,  armor=True)
+        keydata = crypto.get_public_keydata(keyhandle, armor=True)
         # logger.debug('keydata %s', keydata)
 
     def test_gen_key_and_get_secret_keydata(self, crypto):
         keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
         logger.debug('keyhandle %s', keyhandle)
-        keydata = crypto.get_secret_keydata(keyhandle,  armor=True)
+        keydata = crypto.get_secret_keydata(keyhandle, armor=True)
         # logger.debug('keydata %s', keydata)
 
     # TODO: check test fail cause of subkeys order
     # def test_list_secret_keyhandles(self, crypto):
     #     keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
     #     l = crypto.list_secret_keyinfos(keyhandle)
-    #     logger.debug('l %s',  l)
+    #     logger.debug('l %s', l)
     #     assert len(l) == 2
     #     assert l[0].id == keyhandle
 

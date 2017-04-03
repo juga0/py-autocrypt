@@ -238,7 +238,7 @@ def sendmail(ctx, args):
     Note that unknown options and all arguments are passed through to the
     "sendmail" program.
     """
-    logger.info('args %s',  args)
+    logger.info('args %s', args)
     assert args
     account = get_account(ctx)
     args = list(args)

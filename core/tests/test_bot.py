@@ -148,7 +148,7 @@ class TestBot:
 ##        Autocrypt = None if not with_ac else ac_sender.ac_headerval
 ##        msg = mime.gen_mail_msg(
 ##            From=ac_sender.adr, To=[bcmd.bot_adr],
-##            MessageID=mime.make_msgid("5" * 50),  # long MessageID
+##            MessageID=mime.make_msgid("5" * 50), # long MessageID
 ##            Autocrypt=Autocrypt, Subject="hello", _dto=True)
 ##
 ##        bcmd.run_ok(["bot-reply", "--smtp={},{}".format(host, port)],
