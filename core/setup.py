@@ -2,20 +2,20 @@ import os
 from setuptools import setup
 
 def main():
-    with open(os.path.join("autocrypt", "__init__.py")) as f:
+    with open(os.path.join("acpgpy", "__init__.py")) as f:
         for line in f:
             if "__version__" in line.strip():
                 version = line.split("=", 1)[1].strip().strip('"')
                 break
 
     setup(
-        name='autocrypt',
+        name='acpgpy',
         description='Autocrypt: E-mail Encryption for Everyone example implementation',
         version=version,
         url='https://autocrypt.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
-        author='holger krekel and the autocrypt team',
+        author='juga and the autocrypt team',
         author_email='autocrypt at lists.mayfirst.org',
         classifiers=['Development Status :: 3 - Alpha',
                      'Intended Audience :: Developers',
@@ -25,10 +25,10 @@ def main():
                      'Topic :: Utilities',
                      'Intended Audience :: Developers',
                      'Programming Language :: Python'],
-        packages=['autocrypt'],
+        packages=['acpgpy'],
         entry_points='''
             [console_scripts]
-            autocrypt=autocrypt.cmdline_crypto:autocrypt_main
+            acpgpy=acpgpy.cmdline_crypto:acpgpy_main
         ''',
         install_requires = ["click>=6.0", "six"],
         zip_safe=False,
