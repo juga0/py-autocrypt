@@ -2,7 +2,7 @@
 # vim:ts=4:sw=4:expandtab
 
 """
-simple bot functionality to work answering for bot@acpgpy.org
+simple bot functionality to work answering for bot@autocrypt.org
 """
 from __future__ import print_function
 
@@ -35,7 +35,7 @@ def bot_reply(ctx, smtp, fallback_delivto):
 
     This command will generate a reply message and send it to stdout by default.
     The reply message contains an Autocrypt header and details of what
-    was found and understood from the bot and it's acpgpy account code
+    was found and understood from the bot and it's autocrypt account code
     in the stdin message.
     """
     account = get_account(ctx)

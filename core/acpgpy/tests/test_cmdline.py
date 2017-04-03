@@ -92,7 +92,7 @@ class TestProcessIncoming:
         logger.debug('+++++++++++++++')
         # FIXME
         # mycmd.run_fail(["process-incoming"], 
-                        # """*IdentityNotFound*bob@testsuite.acpgpy.org*""",
+                        # """*IdentityNotFound*bob@testsuite.autocrypt.org*""",
                         # """IdentityNotFound""",
         #                 input=mail)                        
 

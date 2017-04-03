@@ -17,7 +17,7 @@ from .cmdline_utils import (
     out_red, log_info, mycommand,
 )
 from .account import Account, IdentityNotFound
-from .bingpg import find_executable
+from .utils import find_executable
 from . import mime
 from .bot import bot_reply
 
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 @click.option("--basedir", type=click.Path(),
               default=click.get_app_dir("acpgpy"),
               envvar="AUTOCRYPT_BASEDIR",
-              help="directory where acpgpy account state is stored")
+              help="directory where autocrypt account state is stored")
 @click.version_option()
 @click.pass_context
 def acpgpy_main(context, basedir):
@@ -41,12 +41,12 @@ def acpgpy_main(context, basedir):
 
 @mycommand()
 @click.option("--replace", default=False, is_flag=True,
-              help="delete acpgpy account directory before attempting init")
+              help="delete autocrypt account directory before attempting init")
 @click.option("--no-identity", default=False, is_flag=True,
               help="initializing without creating a default identity")
 @click.pass_context
 def init(ctx, replace, no_identity):
-    """init acpgpy account state.
+    """init autocrypt account state.
 
     By default this command creates account state in a directory with
     a default "catch-all" identity which matches all email addresses
@@ -106,7 +106,7 @@ def add_identity(ctx, identity_name,
     existing key with --use-key=keyhandle where keyhandle may be
     something for which gpg finds it with 'gpg --list-secret-keys keyhandle'.
     Typically you will then also specify --use-system-keyring to make use of
-    your existing keys.  All incoming acpgpy keys will thus be stored in
+    your existing keys.  All incoming autocrypt keys will thus be stored in
     the system key ring instead of an own keyring.
     """
     account = get_account(ctx)
@@ -171,7 +171,7 @@ def test_email(ctx, emailadr):
 @click.argument("emailadr", type=click.STRING)
 @click.pass_context
 def make_header(ctx, emailadr):
-    """print acpgpy header for an emailadr. """
+    """print autocrypt header for an emailadr. """
     account = get_account(ctx)
     click.echo(account.make_header(emailadr))
 
@@ -194,7 +194,7 @@ def set_prefer_encrypt(ctx, value):
 @mycommand("process-incoming")
 @click.pass_context
 def process_incoming(ctx):
-    """parse acpgpy headers from stdin mail. """
+    """parse autocrypt headers from stdin mail. """
     account = get_account(ctx)
     msg = mime.parse_message_from_file(sys.stdin)
     peerinfo = account.process_incoming(msg)
@@ -212,7 +212,7 @@ def process_incoming(ctx):
 @mycommand("process-outgoing")
 @click.pass_context
 def process_outgoing(ctx):
-    """add acpgpy header for outgoing mail.
+    """add autocrypt header for outgoing mail.
 
     We process mail from stdin by adding an Autocrypt
     header and send the resulting message to stdout.
@@ -295,7 +295,7 @@ def export_public_key(ctx, id, keyhandle_or_email):
 @id_option
 @click.pass_context
 def export_secret_key(ctx, id):
-    """print secret key of own acpgpy account. """
+    """print secret key of own autocrypt account. """
     account = get_account(ctx)
     ident = account.get_identity(id)
     data = ident.export_secret_key()

@@ -23,7 +23,7 @@ def ac_sender(account, request):
 @pytest.fixture
 def bcmd(mycmd):
     mycmd.run_ok(["init"])
-    mycmd.bot_adr = "bot@acpgpy.org"
+    mycmd.bot_adr = "bot@autocrypt.org"
     return mycmd
 
 
@@ -138,7 +138,7 @@ class TestBot:
         assert reply_msg["Autocrypt"]
         body = decode_body(reply_msg)
         print(body)
-        assert "no acpgpy header" in body.lower()
+        assert "no autocrypt header" in body.lower()
 
     # FIXME
 ##    @pytest.mark.parametrize("with_ac", [True, False])
