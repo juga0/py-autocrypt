@@ -35,6 +35,10 @@ script:
   - which gpg2
   - tox -e $TESTENV --recreate -- --no-test-cache --with-gpg2 tests/
 
+after_success:
+  - coveralls
+  - codecov
+
 #notifications:
 #  irc:
 #    channels:
