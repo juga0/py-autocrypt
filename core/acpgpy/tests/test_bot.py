@@ -140,36 +140,36 @@ class TestBot:
         print(body)
         assert "no autocrypt header" in body.lower()
 
-    # FIXME
-##    @pytest.mark.parametrize("with_ac", [True, False])
-##    def test_send_reply(self, smtpserver, bcmd, ac_sender, with_ac, linematch):
-##        host, port = smtpserver.addr[:2]
-##        logger.debug('host %s, port %s', host, port)
-##        Autocrypt = None if not with_ac else ac_sender.ac_headerval
-##        msg = mime.gen_mail_msg(
-##            From=ac_sender.adr, To=[bcmd.bot_adr],
-##            MessageID=mime.make_msgid("5" * 50), # long MessageID
-##            Autocrypt=Autocrypt, Subject="hello", _dto=True)
-##
-##        bcmd.run_ok(["bot-reply", "--smtp={},{}".format(host, port)],
-##                    input=msg.as_string())
-##
-##        assert len(smtpserver.outbox) == 1
-##        msg2 = smtpserver.outbox[0]
-##        assert msg2["To"] == msg["From"]
-##        assert msg2["From"] == msg["To"]
-##        assert msg2["In-Reply-To"] == msg["Message-ID"]
-##        assert msg["Subject"] in msg2["Subject"]
-##        body = decode_body(msg2)
-##        linematch(body, """
-##            *Got your mail*
-##            *Message-ID*{}*
-##        """.format(msg["Message-ID"][:20]))
-##        if with_ac:
-##            linematch(body, """
-##                *processed incoming*found:*
-##                *{senderadr}*{senderkeyhandle}*
-##            """.format(
-##                senderadr=ac_sender.adr,
-##                senderkeyhandle=ac_sender.config.own_keyhandle,
-##            ))
+    # # FIXME: test not passing
+    # @pytest.mark.parametrize("with_ac", [True, False])
+    # def test_send_reply(self, smtpserver, bcmd, ac_sender, with_ac, linematch):
+    #     host, port = smtpserver.addr[:2]
+    #     logger.debug('host %s, port %s', host, port)
+    #     Autocrypt = None if not with_ac else ac_sender.ac_headerval
+    #     msg = mime.gen_mail_msg(
+    #         From=ac_sender.adr, To=[bcmd.bot_adr],
+    #         MessageID=mime.make_msgid("5" * 50), # long MessageID
+    #         Autocrypt=Autocrypt, Subject="hello", _dto=True)
+    #
+    #     bcmd.run_ok(["bot-reply", "--smtp={},{}".format(host, port)],
+    #                 input=msg.as_string())
+    #
+    #     assert len(smtpserver.outbox) == 1
+    #     msg2 = smtpserver.outbox[0]
+    #     assert msg2["To"] == msg["From"]
+    #     assert msg2["From"] == msg["To"]
+    #     assert msg2["In-Reply-To"] == msg["Message-ID"]
+    #     assert msg["Subject"] in msg2["Subject"]
+    #     body = decode_body(msg2)
+    #     linematch(body, """
+    #         *Got your mail*
+    #         *Message-ID*{}*
+    #     """.format(msg["Message-ID"][:20]))
+    #     if with_ac:
+    #         linematch(body, """
+    #             *processed incoming*found:*
+    #             *{senderadr}*{senderkeyhandle}*
+    #         """.format(
+    #             senderadr=ac_sender.adr,
+    #             senderkeyhandle=ac_sender.config.own_keyhandle,
+    #        ))

@@ -458,6 +458,13 @@ class Crypto(object):
                                     uid=uid,
                                     id=k.fingerprint.keyid,
                                     date_created=k.created))
+            for k in k.subkeys.values():
+                keyinfos.append(KeyInfo(type=k.key_algorithm.value,
+                                    bits=k.key_size,
+                                    uid=uid,
+                                    id=k.fingerprint.keyid,
+                                    date_created=k.created))
+
         logger.debug('keyinfos %s', keyinfos)
         return keyinfos
 

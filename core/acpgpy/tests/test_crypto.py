@@ -4,9 +4,8 @@
 from __future__ import unicode_literals
 
 import logging
-import os
 import pytest
-from autocrypt.crypto import Crypto, cached_property, KeyInfo
+from acpgpy.crypto import Crypto, cached_property, KeyInfo
 
 
 FORMAT = "%(levelname)s: %(filename)s:%(lineno)s -"\
@@ -52,27 +51,48 @@ class TestCrypto:
         logger.debug('keyhandle %s', keyhandle)
         keydata = crypto.get_public_keydata(keyhandle, armor=True)
         # logger.debug('keydata %s', keydata)
+        # TODO: as below, not implemented
 
     def test_gen_key_and_get_secret_keydata(self, crypto):
         keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
         logger.debug('keyhandle %s', keyhandle)
         keydata = crypto.get_secret_keydata(keyhandle, armor=True)
         # logger.debug('keydata %s', keydata)
+        # TODO: the following is not implemented
+        # packets = bingpg.list_packets(keydata)
+        # # maybe the below a bit too strict?
+        # assert len(packets) == 5
+        # assert packets[0][0] == "secret key packet"
+        # assert packets[1][0] == "user ID packet"
+        # assert packets[1][1] == '" <hello@xyz.org>"'
+        # assert packets[2][0] == "signature packet"
+        # assert packets[3][0] == "secret sub key packet"
+        # assert packets[4][0] == "signature packet"
+        #
+        # keydata = bingpg.get_public_keydata(keyhandle)
+        # packets = bingpg.list_packets(keydata)
+        # assert len(packets) == 5
+        # assert packets[0][0] == "public key packet" == packets[0][0]
+        # assert packets[1][0] == "user ID packet"
+        # assert packets[1][1] == '" <hello@xyz.org>"'
+        # assert packets[2][0] == "signature packet"
+        # assert packets[3][0] == "public sub key packet"
+        # assert packets[4][0] == "signature packet"
 
-    # TODO: check test fail cause of subkeys order
-    # def test_list_secret_keyhandles(self, crypto):
-    #     keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
-    #     l = crypto.list_secret_keyinfos(keyhandle)
-    #     logger.debug('l %s', l)
-    #     assert len(l) == 2
-    #     assert l[0].id == keyhandle
+    def test_list_secret_keyhandles(self, crypto):
+        keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
+        l = crypto.list_secret_keyinfos(keyhandle)
+        logger.debug('l %s', l)
+        assert len(l) == 2
+        assert l[0].id == keyhandle
 
-    # TODO: check test fail cause of subkeys order
-    # def test_list_public_keyhandles(self, crypto):
-    #     keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
-    #     l = crypto.list_public_keyinfos(keyhandle)
-    #     assert len(l) == 2
-    #     assert l[0].match(keyhandle)
+    def test_list_public_keyhandles(self, crypto):
+        keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
+        l = crypto.list_public_keyinfos(keyhandle)
+        # FIXME: 2 was because of primary + secondary or cause of
+        # public + secret?
+        assert len(l) == 2
+        assert l[0].match(keyhandle)
 
     # TODO: fix test encryptying/decrypting
     @pytest.mark.parametrize("armor", [True, False])
@@ -90,7 +110,8 @@ class TestCrypto:
         logger.debug('++++++++++++++++++++test import public data')
         assert keyhandle2 == keyhandle
         logger.debug('----------------both keyhandles are the same')
-        out_encrypt = crypto.encrypt(b"123", recipients=[keyhandle])
+        # FIXME:
+    #     out_encrypt = crypto.encrypt(b"123", recipients=[keyhandle])
     #
     #     out, decrypt_info = crypto.decrypt(out_encrypt)
     #     assert out == b"123"
@@ -108,7 +129,6 @@ class TestCrypto:
     #         pytest.fail("decryption key {!r} not found in {}".format(
     #                     k.id, keyinfos))
 
-    # TODO: check test
     def test_gen_key_and_sign_verify(self, crypto):
         keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
         sig = crypto.sign(b"123", keyhandle=keyhandle)

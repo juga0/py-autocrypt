@@ -4,7 +4,6 @@
 from __future__ import unicode_literals
 import pytest
 import logging
-from time import sleep
 
 from acpgpy.account import IdentityConfig, Account, NotInitialized
 from acpgpy import mime
@@ -185,12 +184,19 @@ class TestIdentities:
 
     def test_add_existing_key(self, account_maker, datadir):
         bob_ac = account_maker()
+        logger.debug('created bob account %s', bob_ac)
+        # logger.debug('bob_ac crypto %s', bob_ac.crypto)
         bob_ident = bob_ac.get_identity()
+        logger.debug('created bob identity %s', bob_ident)
+        logger.debug('bob_ident crypto %s', bob_ident.crypto)
         alice_ac = account_maker(init=False)
+        logger.debug('created alice account without init %s', alice_ac)
         alice_ac.init()
-        # FIXME: alice can not have access to bob's private key
-        # to be correct it should add a key that is also in her "keyring"
-        # with private key
+        logger.debug('init alice_ac %s', alice_ac)
+        # logger.debug('alice crypto %s', alice_ac.crypto)
+        # # FIXME: alice can not have access to bob's private key
+        # # to be correct it should add a key that is also in her "keyring"
+        # # with private key
         # keyhandle = alice_ac.crypto.gen_secret_key()
         # alice_ident.crypto.publicpgpykeys = bob_ident.crypto.publicpgpykeys
         # alice_ident.crypto.secretpgpykeys = bob_ident.crypto.secretpgpykeys
