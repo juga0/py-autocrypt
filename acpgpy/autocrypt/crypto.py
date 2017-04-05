@@ -128,7 +128,8 @@ class Crypto(object):
         if self.own_pgpykey is None and self.secretpgpykeys:
             # FIXME: there could be more than 1?
             self.own_pgpykey = self.secretpgpykeys[0]
-            logger.debug('self.own_pgpykey.fingerprint.keyid %s', self.own_pgpykey.fingerprint.keyid)
+            logger.debug('self.own_pgpykey.fingerprint.keyid %s',
+                         self.own_pgpykey.fingerprint.keyid)
         logger.debug('self.secretpgpykeys %s', self.secretpgpykeys)
 
     def load_keys_from_pgpykr(self):
@@ -240,10 +241,9 @@ class Crypto(object):
         if add_subkey is True:
             subkey = PGPKey.new(alg_subkey, size)
             logger.debug('new subkey')
-            skey.add_subkey(
-                                subkey,
-                                usage={KeyFlags.EncryptCommunications,
-                                       KeyFlags.EncryptStorage})
+            skey.add_subkey(subkey,
+                            usage={KeyFlags.EncryptCommunications,
+                                   KeyFlags.EncryptStorage})
             logger.debug('subkey added')
         if protected is True:
             passphrase = getpass.getpass()
@@ -252,7 +252,7 @@ class Crypto(object):
                              SymmetricKeyAlgorithm.AES256,
                              HashAlgorithm.SHA256)
             logger.debug('Key protected')
-
+        # NOTE: this is not needed, as it it signed by default
         # self.sign_own_key()
 
         # put the key as exported ASCII-armored in ring
@@ -275,24 +275,6 @@ class Crypto(object):
     def supports_eddsa(self):
         return False
 
-    # def sign_own_key(self):
-    #     logger.debug('signing own key')
-    #     # self.own_pgpykey.certify(self.own_pgpykey.userids[0])
-    #     # for uid in self.own_pgpykey.pubkey.userids:
-    #     #     logger.debug('uid %s', uid)
-    #     #     uid |= self.own_pgpykey.certify(uid)
-    #
-    #     # cert = self.own_pgpykey.certify(self.own_pgpykey.pubkey.userids[0], level=SignatureType.Persona_Cert)
-    #     # self.own_pgpykey.pubkey.userids[0] |= cert
-    #
-    #     # self.own_pgpykey.pubkey |= self.own_pgpykey.certify(self.own_pgpykey.pubkey)
-    #
-    #     logger.debug('self.own_pgpykey.pubkey.userids[0].signers %s', self.own_pgpykey.pubkey.userids[0].signers)
-    #     logger.debug('self.own_pgpykey.userids[0].signers %s', self.own_pgpykey.userids[0].signers)
-    #
-    #     logger.debug('own_pgpkey.pubkey.subkeys.values()[0].signers %s', self.own_pgpykey.pubkey.subkeys.values()[0].signers )
-    #     logger.debug('own_pgpkey.subkeys.values()[0].signers %s', self.own_pgpykey.subkeys.values()[0].signers)
-
     def export_skey(self, pgpykey=None):
         if pgpykey is None:
             pgpykey = self.own_pgpykey
@@ -301,7 +283,7 @@ class Crypto(object):
         secretkeydata = self.get_secret_keydata(armor=True,
                                                 pgpykey=pgpykey)
         skpath = os.path.join(self.pgpydir, pgpykey.fingerprint.keyid
-                               + '.key')
+                              + '.key')
         with open(skpath, 'w') as fd:
             fd.write(secretkeydata)
             logger.debug('written %s', skpath)
@@ -336,31 +318,33 @@ class Crypto(object):
         logger.debug('exported all keys')
 
     def get_secretkey_from_keyhandle(self, keyhandle):
-        logger.debug('keyhandle %s', keyhandle)
-        keys = [k for k in self.secretpgpykeys
-                if (k.fingerprint.keyid == keyhandle
-                    or k.fingerprint.shortid == keyhandle)]
-        logger.debug('keys %s', [k.fingerprint.keyid for k in keys])
-        if len(keys) > 0:
-            logger.debug('found secret key with keyhandle %s', keyhandle)
-            return keys[0]
+        for k in self.secretpgpykeys:
+            if (k.fingerprint.keyid == keyhandle
+                or k.fingerprint.shortid == keyhandle):
+                logger.debug('found secret key with keyhandle %s',
+                             keyhandle)
+                logger.debug('type(k) %s', type(k))
+                return k
         logger.debug('not found secret key with keyhandle')
         return None
 
     def get_publickey_from_kh(self, keyhandle):
-        keys = [k for k in self.publicpgpykeys
-                if (k.fingerprint.keyid == keyhandle
-                    or k.fingerprint.shortid == keyhandle)]
-        logger.debug('keys %s', [k.fingerprint.keyid for k in keys])
-        if len(keys) > 0:
-            logger.debug('found public key with keyhandle %s', keyhandle)
-            return keys[0]
+        for k in self.publicpgpykeys:
+            if (k.fingerprint.keyid == keyhandle
+                or k.fingerprint.shortid == keyhandle):
+                logger.debug('found public key with keyhandle %s',
+                             keyhandle)
+                logger.debug('type(k) %s', type(k))
+                return k
         logger.debug('not found public key with keyhandle')
         return None
 
     def get_key_from_keyhandle(self, keyhandle):
-        if self.get_secretkey_from_keyhandle(keyhandle) is None:
-            return self.get_publickey_from_kh(keyhandle)
+        k = self.get_secretkey_from_keyhandle(keyhandle)
+        if k is None:
+            logger.debug('not found secret key, trying with public one')
+            k = self.get_publickey_from_kh(keyhandle)
+        return k
 
     def get_userid_from_keyhandle(self, keyhandle=None):
         if keyhandle is None:
@@ -498,16 +482,17 @@ class Crypto(object):
         logger.debug('enc_msg.signers %s', enc_msg.signers)
         logger.debug('recipients %s', recipients)
         for r in recipients:
-            # FIXME: this fail because PGPy try to find self_signatures
-            # in subkey
-            k = self.get_key_from_keyhandle(r)
-            if not k.is_public:
-                pk = k.pubkey
-            else:
-                pk = k
-            psubkey = pk.subkeys.values()[0]
+            # k = self.get_key_from_keyhandle(r)
+            k = self.get_publickey_from_kh(r)
+            # if not k.is_public:
+            #     pk = k.pubkey
+            # else:
+            #     pk = k
+            # psubkey = pk.subkeys.values()[0]
             # logger.debug('psubkey %s', psubkey)
-            logger.debug('about to encrypt')
+            logger.debug('k %s', k)
+            logger.debug('type(k) %s', type(k))
+            logger.debug('about to encrypt with key %s', k.fingerprint.keyid)
             enc_msg = k.encrypt(enc_msg)
             # enc_msg = psubkey.encrypt(enc_msg)
         logger.debug('enc_msg %s', enc_msg)

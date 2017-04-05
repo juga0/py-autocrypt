@@ -90,8 +90,8 @@ class TestBot:
             From=send_adr, To=[bcmd.bot_adr],
             Subject="hello")
 
-        out = bcmd.run_ok(["bot-reply", "--fallback-delivto", bcmd.bot_adr],
-                          input=msg.as_string())
+        out = bcmd.run_ok(["bot-reply", "--fallback-delivto",
+                           bcmd.bot_adr], input=msg.as_string())
 
         reply_msg = mime.parse_message_from_string(out)
         linematch(decode_body(reply_msg), """
@@ -141,7 +141,8 @@ class TestBot:
         assert "no autocrypt header" in body.lower()
 
     @pytest.mark.parametrize("with_ac", [True, False])
-    def test_send_reply(self, smtpserver, bcmd, ac_sender, with_ac, linematch):
+    def test_send_reply(self, smtpserver, bcmd, ac_sender, with_ac,
+                        linematch):
         host, port = smtpserver.addr[:2]
         logger.debug('host %s, port %s', host, port)
         Autocrypt = None if not with_ac else ac_sender.ac_headerval

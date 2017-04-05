@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import logging
 import pytest
-from autocrypt.crypto import Crypto, cached_property, KeyInfo
+from autocrypt.crypto import cached_property, KeyInfo
 
 
 FORMAT = "%(levelname)s: %(filename)s:%(lineno)s -"\
@@ -89,20 +89,21 @@ class TestCrypto:
     def test_list_public_keyhandles(self, crypto):
         keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
         l = crypto.list_public_keyinfos(keyhandle)
-        # FIXME: 2 was because of primary + secondary or cause of
-        # public + secret?
         assert len(l) == 2
         assert l[0].match(keyhandle)
 
     # TODO: fix test encryptying/decrypting
     @pytest.mark.parametrize("armor", [True, False])
-    def test_transfer_key_and_encrypt_decrypt_roundtrip(self, crypto, armor):
+    def test_transfer_key_and_encrypt_decrypt_roundtrip(self, crypto,
+                                                        armor):
         keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
-        priv_keydata = crypto.get_secret_keydata(keyhandle=keyhandle, armor=armor)
+        priv_keydata = crypto.get_secret_keydata(keyhandle=keyhandle,
+                                                 armor=armor)
         logger.debug('test get secret data')
         if armor:
             priv_keydata.decode("ascii")
-        public_keydata = crypto.get_public_keydata(keyhandle=keyhandle, armor=armor)
+        public_keydata = crypto.get_public_keydata(keyhandle=keyhandle,
+                                                   armor=armor)
         logger.debug('test get public data')
         if armor:
             public_keydata.decode("ascii")
@@ -110,24 +111,30 @@ class TestCrypto:
         logger.debug('++++++++++++++++++++test import public data')
         assert keyhandle2 == keyhandle
         logger.debug('----------------both keyhandles are the same')
-        # FIXME:
-    #     out_encrypt = crypto.encrypt(b"123", recipients=[keyhandle])
-    #
-    #     out, decrypt_info = crypto.decrypt(out_encrypt)
-    #     assert out == b"123"
-    #     assert len(decrypt_info) == 1
-    #     k = decrypt_info[0]
-    #     assert str(k)
-    #     assert k.bits == 2048
-    #     assert k.type == "RSA"
-    #     assert k.date_created
-    #     keyinfos = crypto.list_public_keyinfos(keyhandle)
-    #     for keyinfo in keyinfos:
-    #         if keyinfo.match(k.id):
-    #             break
-    #     else:
-    #         pytest.fail("decryption key {!r} not found in {}".format(
-    #                     k.id, keyinfos))
+        # FIXME:encryption works when testing in shell, but for some
+        # reason when using public key here, obtain:
+        # AttributeError: 'NoneType' object has no attribute 'fingerprint'
+        # pgp.py:1359: AttributeError
+        # and when using private key:
+        # E               PGPError: Expected: is_public == True. Got: False
+        # decorators.py:112: PGPError
+        # out_encrypt = crypto.encrypt(b"123", recipients=[keyhandle])
+        #
+        # out, decrypt_info = crypto.decrypt(out_encrypt)
+        # assert out == b"123"
+        # assert len(decrypt_info) == 1
+        # k = decrypt_info[0]
+        # assert str(k)
+        # assert k.bits == 2048
+        # assert k.type == "RSA"
+        # assert k.date_created
+        # keyinfos = crypto.list_public_keyinfos(keyhandle)
+        # for keyinfo in keyinfos:
+        #     if keyinfo.match(k.id):
+        #         break
+        # else:
+        #     pytest.fail("decryption key {!r} not found in {}".format(
+        #                 k.id, keyinfos))
 
     def test_gen_key_and_sign_verify(self, crypto):
         keyhandle = crypto.gen_secret_key(emailadr="hello@xyz.org")
