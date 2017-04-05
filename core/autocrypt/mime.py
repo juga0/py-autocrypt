@@ -4,14 +4,12 @@
 """ mime message parsing and manipulation functions for Autocrypt usage. """
 
 from __future__ import unicode_literals, print_function
-import logging
 import email.parser
 import base64
 from email.mime.text import MIMEText
 from email.utils import formatdate, make_msgid
 import six
 
-logger = logging.getLogger(__name__)
 
 def make_ac_header_value(emailadr, keydata, prefer_encrypt="notset", keytype="p"):
     assert keydata
@@ -64,13 +62,11 @@ def parse_one_ac_header_from_string(string):
 
 def parse_all_ac_headers_from_msg(msg):
     autocrypt_headers = msg.get_all("Autocrypt") or []
-    logger.debug('autocrypt_headers %s', autocrypt_headers)
     return [parse_ac_headervalue(inb)
                 for inb in autocrypt_headers if inb]
 
 
 def parse_one_ac_header_from_msg(msg):
-    logger.debug('')
     all_results = parse_all_ac_headers_from_msg(msg)
     if len(all_results) == 1:
         return all_results[0]
@@ -85,14 +81,10 @@ def parse_ac_headervalue(value):
     from the specified autocrypt header value.  Unspecified
     default values for prefer-encrypt and the key type are filled in."""
     parts = value.split(";")
-    logger.debug('parts %s', parts)
     result_dict = {"prefer-encrypt": "notset", "type": "p"}
     for x in parts:
-        logger.debug('x %s', x)
         kv = x.split("=", 1)
-        logger.debug('kv %s', kv)
         name, value = [x.strip() for x in kv]
-        logger.debug('name %s, value %s', name, value)
         if name == "key":
             value = "".join(value.split())
         result_dict[name] = value
