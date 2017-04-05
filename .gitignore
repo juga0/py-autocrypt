@@ -7,4 +7,5 @@ doc/_build
 .tox
 build
 dist
-autocrypt/.coverage
+*/.coverage
+*/htmlcov/

@@ -1,18 +1,19 @@
 import os
 from setuptools import setup
+from autocrypt import __version__
 
 def main():
-    with open(os.path.join("autocrypt", "__init__.py")) as f:
-        for line in f:
-            if "__version__" in line.strip():
-                version = line.split("=", 1)[1].strip().strip('"')
-                break
+    # with open(os.path.join("autocrypt", "__init__.py")) as f:
+    #     for line in f:
+    #         if "__version__" in line.strip():
+    #             version = line.split("=", 1)[1].strip().strip('"')
+    #             break
 
     setup(
         name='autocrypt',
         description='Autocrypt: E-mail Encryption for everyone example \
                      implementation',
-        version=version,
+        version=__version__,
         url='https://autocrypt.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
@@ -37,7 +38,7 @@ def main():
         ],
         dependency_links=[
             "https://github.com/SecurityInnovation/PGPy.git@\
-             24f5daee6eab9b334197a0a2d7035dfaf1521a58#egg=PGPy-0.4.1"
+             @release/0.4.1#egg=PGPy-0.4.1"
             ],
         extras_require={
             'dev': ['ipython', 'pyflakes', 'pep8'],
