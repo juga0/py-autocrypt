@@ -29,13 +29,15 @@ def main():
         packages=['autocrypt'],
         entry_points='''
             [console_scripts]
-            autocrypt=autocrypt.cmdline_crypto:autocrypt_main
+            autocrypt=autocrypt.cmdline:autocrypt_main
         ''',
         install_requires=[
             "click>=6.0",
-             "six",
-            "git+https://github.com/SecurityInnovation/PGPy.git@\
-             24f5daee6eab9b334197a0a2d7035dfaf1521a58#egg=PGPy"
+             "six"
+        ],
+        dependency_links=[
+            "https://github.com/SecurityInnovation/PGPy.git@\
+             24f5daee6eab9b334197a0a2d7035dfaf1521a58#egg=PGPy-0.4.1"
             ],
         zip_safe=False,
     )
