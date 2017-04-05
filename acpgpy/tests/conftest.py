@@ -8,9 +8,9 @@ import os
 import itertools
 import pytest
 from _pytest.pytester import LineMatcher
-from acpgpy import mime
-from acpgpy.account import Account
-from acpgpy.crypto import Crypto
+from autocrypt import mime
+from autocrypt.account import Account
+from autocrypt.crypto import Crypto
 
 
 @pytest.fixture
@@ -128,8 +128,8 @@ def linematch():
 @pytest.fixture
 def cmd():
     """ invoke a command line subcommand. """
-    from acpgpy.cmdline import acpgpy_main
-    return ClickRunner(acpgpy_main)
+    from autocrypt.cmdline import autocrypt_main
+    return ClickRunner(autocrypt_main)
 
 
 @pytest.fixture

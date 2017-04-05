@@ -65,7 +65,7 @@ def bot_reply(ctx, smtp, fallback_delivto):
     with log.s("And this is the mime structure i saw:"):
         log(mime.render_mime_structure(msg))
 
-    with log.s("processing your mail through py-acpgpy:"):
+    with log.s("processing your mail through py-autocrypt:"):
         ident = account.get_identity_from_emailadr([delivto])
         peerinfo = account.process_incoming(msg, delivto=delivto)
         if peerinfo is not None:

@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import logging
 import pytest
-from acpgpy.crypto import Crypto, cached_property, KeyInfo
+from autocrypt.crypto import Crypto, cached_property, KeyInfo
 
 
 FORMAT = "%(levelname)s: %(filename)s:%(lineno)s -"\

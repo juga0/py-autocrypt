@@ -136,7 +136,7 @@ class IdentityNotFound(AccountException):
 
 
 class Account(object):
-    """ Autocrypt Account class which allows to manipulate acpgpy
+    """ Autocrypt Account class which allows to manipulate autocrypt
     configuration and state for use from mail processing agents.
     Autocrypt uses a standalone GPG managed keyring and persists its
     config to a default app-config location.
@@ -250,7 +250,7 @@ class Account(object):
             in the generated Autocrypt header.  An account may generate
             and send mail from multiple aliases and we advertise
             the same key across those aliases.
-            (XXX discuss whether "to" is all that useful for level-0 acpgpy.)
+            (XXX discuss whether "to" is all that useful for level-0 autocrypt.)
 
         :type headername: unicode
         :param headername:

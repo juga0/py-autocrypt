@@ -28,12 +28,12 @@ logger = logging.getLogger(__name__)
 
 @click.command(cls=MyGroup, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("--basedir", type=click.Path(),
-              default=click.get_app_dir("acpgpy"),
+              default=click.get_app_dir("autocrypt"),
               envvar="AUTOCRYPT_BASEDIR",
               help="directory where autocrypt account state is stored")
 @click.version_option()
 @click.pass_context
-def acpgpy_main(context, basedir):
+def autocrypt_main(context, basedir):
     """access and manage Autocrypt keys, options, headers."""
     basedir = os.path.abspath(os.path.expanduser(basedir))
     context.account = Account(basedir)
@@ -355,16 +355,16 @@ def _status_identity(ident):
         click.echo("  ---- no peers registered -----")
 
 
-acpgpy_main.add_command(init)
-acpgpy_main.add_command(status)
-acpgpy_main.add_command(add_identity)
-acpgpy_main.add_command(mod_identity)
-acpgpy_main.add_command(del_identity)
-acpgpy_main.add_command(process_incoming)
-acpgpy_main.add_command(process_outgoing)
-acpgpy_main.add_command(sendmail)
-acpgpy_main.add_command(test_email)
-acpgpy_main.add_command(make_header)
-acpgpy_main.add_command(export_public_key)
-acpgpy_main.add_command(export_secret_key)
-acpgpy_main.add_command(bot_reply)
+autocrypt_main.add_command(init)
+autocrypt_main.add_command(status)
+autocrypt_main.add_command(add_identity)
+autocrypt_main.add_command(mod_identity)
+autocrypt_main.add_command(del_identity)
+autocrypt_main.add_command(process_incoming)
+autocrypt_main.add_command(process_outgoing)
+autocrypt_main.add_command(sendmail)
+autocrypt_main.add_command(test_email)
+autocrypt_main.add_command(make_header)
+autocrypt_main.add_command(export_public_key)
+autocrypt_main.add_command(export_secret_key)
+autocrypt_main.add_command(bot_reply)

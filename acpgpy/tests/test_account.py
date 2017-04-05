@@ -5,8 +5,8 @@ from __future__ import unicode_literals
 import pytest
 import logging
 
-from acpgpy.account import IdentityConfig, Account, NotInitialized
-from acpgpy import mime
+from autocrypt.account import IdentityConfig, Account, NotInitialized
+from autocrypt import mime
 
 FORMAT = "%(levelname)s: %(filename)s:%(lineno)s -"\
          "%(funcName)s - %(message)s"

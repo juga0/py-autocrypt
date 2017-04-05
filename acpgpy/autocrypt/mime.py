@@ -63,10 +63,10 @@ def parse_one_ac_header_from_string(string):
 
 
 def parse_all_ac_headers_from_msg(msg):
-    acpgpy_headers = msg.get_all("Autocrypt") or []
-    logger.debug('acpgpy_headers %s', acpgpy_headers)
+    autocrypt_headers = msg.get_all("Autocrypt") or []
+    logger.debug('autocrypt_headers %s', autocrypt_headers)
     return [parse_ac_headervalue(inb)
-                for inb in acpgpy_headers if inb]
+                for inb in autocrypt_headers if inb]
 
 
 def parse_one_ac_header_from_msg(msg):
