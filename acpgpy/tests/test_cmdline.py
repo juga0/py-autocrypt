@@ -87,14 +87,14 @@ def check_ascii(out):
 class TestProcessIncoming:
     def test_process_incoming(self, mycmd, datadir):
         mycmd.run_ok(["init", "--no-identity"])
-        mycmd.run_ok(["add-identity", "ident1", "--email-regex=some@example.org"])
+        mycmd.run_ok(["add-identity", "ident1",
+                      "--email-regex=some@example.org"])
         mail = datadir.read("rsa2048-simple.eml")
-        logger.debug('+++++++++++++++')
-        # FIXME
-        # mycmd.run_fail(["process-incoming"], 
-                        # """*IdentityNotFound*bob@testsuite.autocrypt.org*""",
-                        # """IdentityNotFound""",
-        #                 input=mail)                        
+        mycmd.run_fail(["process-incoming"],
+                        """
+                        *IdentityNotFound*bob@testsuite.autocrypt.org*
+                        """,
+                        input=mail)
 
         msg = mime.parse_message_from_string(mail)
         msg.replace_header("Delivered-To", "some@example.org")
@@ -110,8 +110,10 @@ class TestProcessIncoming:
 
     def test_process_incoming_no_autocrypt(self, mycmd, datadir):
         mycmd.run_ok(["init", "--no-identity"])
-        mycmd.run_ok(["add-identity", "ident1", "--email-regex=b@b.org"])
-        msg = mime.gen_mail_msg(From="Alice <a@a.org>", To=["b@b.org"], _dto=True)
+        mycmd.run_ok(["add-identity", "ident1",
+                      "--email-regex=b@b.org"])
+        msg = mime.gen_mail_msg(From="Alice <a@a.org>", To=["b@b.org"],
+                                _dto=True)
         mycmd.run_ok(["process-incoming"], """
             *processed*ident1*no*Autocrypt*header*
         """, input=msg.as_string())
@@ -123,9 +125,11 @@ class TestIdentityCommands:
         mycmd.run_ok(["status"], """
             *no identities configured*
         """)
-        mycmd.run_ok(["add-identity", "home", "--email-regex=home@example.org"], """
-            *identity added*home*
-        """)
+        mycmd.run_ok(["add-identity", "home",
+                      "--email-regex=home@example.org"],
+                     """
+                     *identity added*home*
+                     """)
         mycmd.run_ok(["status"], """
             *identity*home*
             *home@example.org*
@@ -140,39 +144,43 @@ class TestIdentityCommands:
         mycmd.run_ok(["status"], """
             *identity*default*
         """)
-        mycmd.run_ok(["mod-identity", "default", "--prefer-encrypt=yes"], """
-            *identity modified*default*
-            *prefer-encrypt*yes*
+        mycmd.run_ok(["mod-identity", "default",
+                      "--prefer-encrypt=yes"],
+                     """
+                     *identity modified*default*
+                     *prefer-encrypt*yes*
+                     """)
+
+    # TODO: PGPy does not currently support native keyring.
+    # gpg wrapper would be needed only for this.
+    # def test_init_existing_key_native_gpg(self, mycmd, crypto):
+    #     adr = "x@y.org"
+    #     keyhandle = crypto.gen_secret_key(adr)
+    #     mycmd.run_ok(["init", "--no-identity"])
+    #     mycmd.run_ok(["add-identity", "home", "--use-key", adr], """
+    #            *own-keyhandle*{}*
+    #     """.format(keyhandle))
+    #     mycmd.run_ok(["make-header", adr], """
+    #        *Autocrypt*to=x@y.org*
+    #     """)
+
+    def test_test_email(self, mycmd):
+        mycmd.run_ok(["init", "--no-identity"])
+        mycmd.run_ok(["add-identity", "home",
+                      "--email-regex=(home|office)@example.org"])
+        mycmd.run_ok(["test-email", "home@example.org"])
+        mycmd.run_ok(["test-email", "office@example.org"])
+        mycmd.run_fail(["test-email", "xhome@example.org"], """
+           *IdentityNotFound*xhome@example.org*
         """)
-
-# FIXME
-##    def test_init_existing_key_native_gpg(self, mycmd, crypto):
-##        adr = "x@y.org"
-##        keyhandle = crypto.gen_secret_key(adr)
-##        mycmd.run_ok(["init", "--no-identity"])
-##        mycmd.run_ok(["add-identity", "home", "--use-key", adr], """
-##                *own-keyhandle*{}*
-##        """.format(keyhandle))
-##        mycmd.run_ok(["make-header", adr], """
-##            *Autocrypt*to=x@y.org*
-##        """)
-
-# FIXME
-##    def test_test_email(self, mycmd):
-##        mycmd.run_ok(["init", "--no-identity"])
-##        mycmd.run_ok(["add-identity", "home", "--email-regex=(home|office)@example.org"])
-##        mycmd.run_ok(["test-email", "home@example.org"])
-##        mycmd.run_ok(["test-email", "office@example.org"])
-##        mycmd.run_fail(["test-email", "xhome@example.org"], """
-##            *IdentityNotFound*xhome@example.org*
-##        """)
 
 
 class TestProcessOutgoing:
     def test_simple(self, mycmd, gen_mail):
         mycmd.run_ok(["init"])
         mail = gen_mail()
-        out1 = mycmd.run_ok(["process-outgoing"], input=mail.as_string())
+        out1 = mycmd.run_ok(["process-outgoing"],
+                            input=mail.as_string())
         m = mime.parse_message_from_string(out1)
         assert len(m.get_all("Autocrypt")) == 1
         found_header = "Autocrypt: " + m["Autocrypt"]
@@ -181,18 +189,20 @@ class TestProcessOutgoing:
         x2 = mime.parse_one_ac_header_from_string(found_header)
         assert x1 == x2
 
-# FIXME
-##    def test_matching_identity(self, mycmd, gen_mail):
-##        mycmd.run_ok(["init", "--no-identity"])
-##        mycmd.run_ok(["add-identity", "ident1", "--email-regex=ident1@a.org"])
-##        mail = gen_mail(From="x@y.org")
-##        mycmd.run_fail(["process-outgoing"], input=mail.as_string(), fnl="""
-##            *IdentityNotFound*x@y.org*
-##        """)
-##        mail = gen_mail(From="ident1@a.org")
-##        out1 = mycmd.run_ok(["process-outgoing"], input=mail.as_string())
-##        msg2 = mime.parse_message_from_string(out1)
-##        assert "ident1@a.org" in msg2["Autocrypt"]
+    def test_matching_identity(self, mycmd, gen_mail):
+        mycmd.run_ok(["init", "--no-identity"])
+        mycmd.run_ok(["add-identity", "ident1",
+                      "--email-regex=ident1@a.org"])
+        mail = gen_mail(From="x@y.org")
+        mycmd.run_fail(["process-outgoing"], input=mail.as_string(),
+                       fnl="""
+            *IdentityNotFound*x@y.org*
+                       """)
+        mail = gen_mail(From="ident1@a.org")
+        out1 = mycmd.run_ok(["process-outgoing"],
+                            input=mail.as_string())
+        msg2 = mime.parse_message_from_string(out1)
+        assert "ident1@a.org" in msg2["Autocrypt"]
 
     def test_simple_dont_replace(self, mycmd, gen_mail):
         mycmd.run_ok(["init"])
@@ -200,7 +210,8 @@ class TestProcessOutgoing:
         gen_header = mycmd.run_ok(["make-header", "x@x.org"])
         mail.add_header("Autocrypt", gen_header)
 
-        out1 = mycmd.run_ok(["process-outgoing"], input=mail.as_string())
+        out1 = mycmd.run_ok(["process-outgoing"],
+                            input=mail.as_string())
         m = mime.parse_message_from_string(out1)
         assert len(m.get_all("Autocrypt")) == 1
         x1 = mime.parse_ac_headervalue(m["Autocrypt"])
@@ -226,7 +237,8 @@ class TestProcessOutgoing:
         mail = gen_mail().as_string()
         pargs = ["-oi", "b@b.org"]
         popen_mock.mock_next_call(ret=2)
-        mycmd.run_fail(["sendmail", "-f", "--", "--qwe"] + pargs, input=mail, code=2)
+        mycmd.run_fail(["sendmail", "-f", "--", "--qwe"] + pargs,
+                       input=mail, code=2)
         assert len(popen_mock.calls) == 1
         call = popen_mock.pop_next_call()
         for x in pargs:
