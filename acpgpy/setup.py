@@ -39,6 +39,11 @@ def main():
             "https://github.com/SecurityInnovation/PGPy.git@\
              24f5daee6eab9b334197a0a2d7035dfaf1521a58#egg=PGPy-0.4.1"
             ],
+        extras_require={
+            'dev': ['ipython', 'pyflakes', 'pep8'],
+            'test': ['coverage', 'coveralls', 'codecov', 'tox',
+                     'pytest', 'pytest-localserver', 'pytest-cov'],
+        },
         zip_safe=False,
     )
 
