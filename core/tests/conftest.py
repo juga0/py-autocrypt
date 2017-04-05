@@ -8,9 +8,17 @@ import os
 import itertools
 import pytest
 from _pytest.pytester import LineMatcher
+from autocrypt.bingpg import find_executable, BinGPG
 from autocrypt import mime
-from autocrypt.account_crypto import Account
-from autocrypt.crypto import Crypto
+from autocrypt.account import Account
+
+
+def pytest_addoption(parser):
+    parser.addoption("--no-test-cache", action="store_true",
+                     help="ignore test cache state")
+
+    parser.addoption("--with-gpg2", action="store_true",
+                     help="run tests also with gpg2")
 
 
 @pytest.fixture
@@ -19,58 +27,82 @@ def tmpdir(tmpdir_factory, request):
     bn = tmpdir_factory.mktemp(base)
     return bn
 
-#
-# @pytest.fixture(autouse=True)
-# def _testcache_crypto_(request, get_next_cache, monkeypatch):
-#     # cache generation of secret keys
-#     old_gen_secret_key = Crypto.gen_secret_key
-#
-#     def gen_secret_key(self, emailadr):
-#         basekey = request.node.nodeid
-#         next_cache = get_next_cache(basekey)
-#         if self.pgpydir and next_cache.exists():
-#             logging.debug("restoring pgpydir {}".format(self.pgpydir))
-#             return next_cache.restore(self.pgpydir)
-#         else:
-#             # if self.pgpydir is None:
-#             #     assert "GNUPGHOME" in os.environ
-#             ret = old_gen_secret_key(self, emailadr)
-#             if self.pgpydir is not None:
-#                 if os.path.exists(self.pgpydir):
-#                     next_cache.store(self.pgpydir, ret)
-#             return ret
-#
-#     monkeypatch.setattr(Crypto, "gen_secret_key", gen_secret_key)
-#
-#     # make sure any possibly started agents are killed
-#     old_init = Crypto.__init__
-#
-#     def __init__(self, *args, **kwargs):
-#         old_init(self, *args, **kwargs)
-#
-#     monkeypatch.setattr(Crypto, "__init__", __init__)
-#     return
+
+@pytest.fixture(params=["gpg1", "gpg2"], scope="module")
+def gpgpath(request):
+    """ return twice with system paths of "gpg" and "gpg2"
+    respectively.  If one is not present the test requesting
+    this fixture is skipped. By default we do not run gpg2
+    tests because they are much slower.  A clean "tox" run
+    will also run the gpg2 tests.
+    """
+    name = "gpg" if request.param == "gpg1" else "gpg2"
+    if name == "gpg2" and not request.config.getoption("--with-gpg2"):
+        pytest.skip("skipped gpg2 tests (specify --with-gpg2 to run)")
+    path = find_executable(name)
+    if path is None:
+        pytest.skip("can not find executable: %s" % request.name)
+    return path
+
+
+@pytest.fixture(autouse=True)
+def _testcache_bingpg_(request, get_next_cache, monkeypatch):
+    # cache generation of secret keys
+    old_gen_secret_key = BinGPG.gen_secret_key
+
+    def gen_secret_key(self, emailadr):
+        basekey = request.node.nodeid
+        next_cache = get_next_cache(basekey)
+        if self.homedir and next_cache.exists():
+            logging.debug("restoring homedir {}".format(self.homedir))
+            return next_cache.restore(self.homedir)
+        else:
+            if self.homedir is None:
+                assert "GNUPGHOME" in os.environ
+            ret = old_gen_secret_key(self, emailadr)
+            if self.homedir is not None:
+                if os.path.exists(self.homedir):
+                    next_cache.store(self.homedir, ret)
+            return ret
+
+    monkeypatch.setattr(BinGPG, "gen_secret_key", gen_secret_key)
+
+    # make sure any possibly started agents are killed
+    old_init = BinGPG.__init__
+
+    def __init__(self, *args, **kwargs):
+        old_init(self, *args, **kwargs)
+        request.addfinalizer(self.killagent)
+
+    monkeypatch.setattr(BinGPG, "__init__", __init__)
+    return
 
 
 @pytest.fixture
-def crypto_maker(request, tmpdir):
-    """ return a function which creates initialized Crypto instances. """
+def bingpg_maker(request, tmpdir, gpgpath):
+    """ return a function which creates initialized BinGPG instances. """
     counter = itertools.count()
 
     def maker(native=False):
         if native:
-            crypto = Crypto()
+            bingpg = BinGPG(gpgpath=gpgpath)
         else:
-            p = tmpdir.join("crypto%d" % next(counter))
-            crypto = Crypto(p.strpath)
-        return crypto
+            p = tmpdir.join("bingpg%d" % next(counter))
+            bingpg = BinGPG(p.strpath, gpgpath=gpgpath)
+        return bingpg
     return maker
 
 
 @pytest.fixture
-def crypto(crypto_maker):
-    """ return an initialized crypto instance. """
-    return crypto_maker()
+def bingpg(bingpg_maker):
+    """ return an initialized bingpg instance. """
+    return bingpg_maker()
+
+
+@pytest.fixture
+def bingpg2(bingpg_maker):
+    """ return an initialized bingpg instance different from the first. """
+    return bingpg_maker()
 
 
 class ClickRunner:
@@ -128,7 +160,7 @@ def linematch():
 @pytest.fixture
 def cmd():
     """ invoke a command line subcommand. """
-    from autocrypt.cmdline_crypto import autocrypt_main
+    from autocrypt.cmdline import autocrypt_main
     return ClickRunner(autocrypt_main)
 
 
@@ -183,13 +215,13 @@ class DirCache:
     def __init__(self, cache, key):
         self.cache = cache
         self.disabled = cache.config.getoption("--no-test-cache")
-        self.own_pgpykey = key
-        self.backup_path = self.cache._cachedir.join(self.own_pgpykey)
+        self.key = key
+        self.backup_path = self.cache._cachedir.join(self.key)
 
     def exists(self):
         dummy = object()
         return not self.disabled and \
-               self.cache.get(self.own_pgpykey, dummy) != dummy and \
+               self.cache.get(self.key, dummy) != dummy and \
                self.backup_path.exists()
 
     def store(self, path, ret):
@@ -203,13 +235,13 @@ class DirCache:
             return [n for n in names if n.startswith("S.")]
 
         shutil.copytree(path, self.backup_path.strpath, ignore=ignore)
-        self.cache.set(self.own_pgpykey, ret)
+        self.cache.set(self.key, ret)
 
     def restore(self, path):
         if os.path.exists(path):
             shutil.rmtree(path)
         shutil.copytree(self.backup_path.strpath, path)
-        return self.cache.get(self.own_pgpykey, None)
+        return self.cache.get(self.key, None)
 
 
 @pytest.fixture
@@ -219,7 +251,7 @@ def account(account_maker):
 
 
 @pytest.fixture
-def account_maker(tmpdir):
+def account_maker(tmpdir, gpgpath):
     """ return a function which creates a new Autocrypt account, by default initialized.
     pass init=False to the function to avoid initizialtion.
     """
@@ -233,7 +265,7 @@ def account_maker(tmpdir):
         if init:
             ac.init()
             if addid:
-                ac.add_identity()
+                ac.add_identity(gpgbin=gpgpath)
         return ac
     return maker
 
