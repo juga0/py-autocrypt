@@ -10,12 +10,13 @@ def main():
 
     setup(
         name='autocrypt',
-        description='Autocrypt: E-mail Encryption for Everyone example implementation',
+        description='Autocrypt: E-mail Encryption for everyone example \
+                     implementation',
         version=version,
         url='https://autocrypt.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
-        author='Holger Krekel and the autocrypt team',
+        author='the Autocrypt team',
         author_email='autocrypt at lists.mayfirst.org',
         classifiers=['Development Status :: 3 - Alpha',
                      'Intended Audience :: Developers',
@@ -30,7 +31,12 @@ def main():
             [console_scripts]
             autocrypt=autocrypt.cmdline_crypto:autocrypt_main
         ''',
-        install_requires=["click>=6.0", "six"],
+        install_requires=[
+            "click>=6.0",
+             "six",
+            "git+https://github.com/SecurityInnovation/PGPy.git@\
+             24f5daee6eab9b334197a0a2d7035dfaf1521a58#egg=PGPy"
+            ],
         zip_safe=False,
     )
 
